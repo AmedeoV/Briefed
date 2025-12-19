@@ -1,0 +1,452 @@
+@model IEnumerable<Briefed.Core.Entities.Article>
+@{
+    ViewData["Title"] = "Articles";
+    var filter = ViewData["Filter"]?.ToString() ?? "all";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📖 Articles</h2>
+    <div>
+        <form asp-action="RefreshFeeds" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-primary">🔄 Refresh Feeds</button>
+        </form>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link @(filter == "all" ? "active" : "")" asp-action="Index" asp-route-filter="all">All</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(filter == "unread" ? "active" : "")" asp-action="Index" asp-route-filter="unread">Unread</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(filter == "read" ? "active" : "")" asp-action="Index" asp-route-filter="read">Read</a>
+    </li>
+</ul>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <h5>No articles found</h5>
+        <p>
+            @if (filter == "unread")
+            {
+                <text>You're all caught up! No unread articles.</text>
+            }
+            else
+            {
+                <text>No articles available. Try adding some RSS feeds or refreshing your feeds.</text>
+            }
+        </p>
+        <a asp-controller="Feeds" asp-action="Index" class="btn btn-primary">Manage Feeds</a>
+    </div>
+}
+else
+{
+    var favoriteFeedIds = ViewBag.FavoriteFeedIds as List<int> ?? new List<int>();
+    var feedGroups = Model.GroupBy(a => a.FeedId)
+        .OrderByDescending(g => favoriteFeedIds.Contains(g.Key))
+        .ThenBy(g => g.First().Feed.Title);
+    
+    @foreach (var feedGroup in feedGroups)
+    {
+        var feed = feedGroup.First().Feed;
+        var feedId = "feed-" + feed.Id;
+        var isFavorite = favoriteFeedIds.Contains(feed.Id);
+        var unreadCount = ViewBag.UnreadCountsByFeed != null && ViewBag.UnreadCountsByFeed.ContainsKey(feed.Id) 
+            ? ViewBag.UnreadCountsByFeed[feed.Id] 
+            : 0;
+        <div class="mb-3">
+            <div class="card">
+                <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#@feedId" aria-expanded="false">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="collapse-icon me-2"></i>
+                            @if (!string.IsNullOrEmpty(feed.FaviconUrl))
+                            {
+                                <img src="@feed.FaviconUrl" alt="@feed.Title icon" class="me-2" style="width: 20px; height: 20px;" onerror="this.style.display='none'" />
+                            }
+                            else
+                            {
+                                <span class="me-2">📰</span>
+                            }
+                            <h5 class="mb-0">@feed.Title</h5>
+                        </div>
+                        <div class="d-flex align-items-center gap-2" onclick="event.stopPropagation();">
+                            @if (unreadCount > 0)
+                            {
+                                <span class="badge bg-primary" id="unread-badge-@feed.Id">@unreadCount unread</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary" id="unread-badge-@feed.Id">All read</span>
+                            }
+                            <button type="button" class="btn btn-sm @(isFavorite ? "btn-warning" : "btn-outline-warning")" 
+                                    id="favorite-btn-@feed.Id"
+                                    title="@(isFavorite ? "Remove from favorites" : "Add to favorites")" 
+                                    onclick="toggleFavorite(@feed.Id, '@feed.Title')">
+                                @(isFavorite ? "★" : "☆")
+                            </button>
+                            <button type="button" class="btn btn-sm btn-info" 
+                                    id="resync-btn-@feed.Id"
+                                    title="Re-sync article dates" 
+                                    onclick="resyncDates(@feed.Id, '@feed.Title')">
+                                🔄
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" 
+                                    id="mark-read-btn-@feed.Id"
+                                    title="Mark all as read" 
+                                    @(unreadCount == 0 ? "disabled" : "")
+                                    onclick="markAllAsRead(@feed.Id, '@feed.Title')">
+                                ✓
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="@feedId" class="collapse">
+                    <div class="card-body p-0">
+                        @{
+                            var readArticleIds = ViewBag.ReadArticleIds as HashSet<int> ?? new HashSet<int>();
+                        }
+                        @foreach (var article in feedGroup.OrderByDescending(a => a.PublishedAt))
+                        {
+                            var isRead = readArticleIds.Contains(article.Id);
+                            var cardClass = isRead ? "border-bottom p-3 read-article" : "border-bottom p-3";
+                            <div class="@cardClass">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">
+                                            <a href="@Url.Action("Read", new { id = article.Id })" class="text-decoration-none @(isRead ? "text-muted" : "text-dark")">
+                                                @article.Title
+                                            </a>
+                                            @if (article.Summary != null)
+                                            {
+                                                <span class="badge bg-success ms-2">✨ Summarized</span>
+                                            }
+                                        </h5>
+                                        <p class="card-text text-muted small mb-2">
+                                            @article.PublishedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")
+                                        </p>
+                                        @if (!string.IsNullOrEmpty(article.Description))
+                                        {
+                                            var excerpt = article.Description.Length > 200 
+                                                ? article.Description.Substring(0, 200) + "..." 
+                                                : article.Description;
+                                            <p class="card-text mb-2">@excerpt</p>
+                                        }
+                                        <div class="mt-2">
+                                            <a href="@Url.Action("Read", new { id = article.Id })" class="btn btn-sm btn-primary">Read</a>
+                                            <form asp-action="Summarize" asp-route-id="@article.Id" method="post" class="d-inline summarize-form" data-article-id="@article.Id">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-success">✨ Summarize</button>
+                                            </form>
+                                            <form asp-action="MarkAsRead" asp-route-id="@article.Id" method="post" class="d-inline mark-read-form" data-article-id="@article.Id" data-feed-id="@article.FeedId">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-info">✓ Mark as Read</button>
+                                            </form>
+                                            <a href="@article.Url" target="_blank" class="btn btn-sm btn-outline-secondary">Open Original</a>
+                                        </div>
+                                        <div id="summary-@article.Id" class="mt-3" style="display: none;">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6 class="card-subtitle mb-2">🤖 AI Summary</h6>
+                                                    <p class="card-text summary-content"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(article.ImageUrl))
+                                    {
+                                        <img src="@article.ImageUrl" alt="Article thumbnail" class="ms-3" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'" />
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.summarize-form').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const articleId = this.dataset.articleId;
+                const button = this.querySelector('button');
+                const originalText = button.innerHTML;
+                const summaryDiv = document.getElementById('summary-' + articleId);
+                const summaryContent = summaryDiv.querySelector('.summary-content');
+                
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
+                
+                try {
+                    const formData = new FormData(this);
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        summaryContent.textContent = result.summary;
+                        summaryDiv.style.display = 'block';
+                        button.innerHTML = '✓ Summarized';
+                        button.classList.remove('btn-outline-success');
+                        button.classList.add('btn-success');
+                    } else {
+                        alert('Error: ' + (result.error || 'Failed to generate summary'));
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                } catch (error) {
+                    alert('Error generating summary: ' + error.message);
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            });
+        });
+        
+        // Handle mark as read form submission
+        document.querySelectorAll('.mark-read-form').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const articleId = this.dataset.articleId;
+                const feedId = this.dataset.feedId;
+                const button = this.querySelector('button');
+                const articleCard = this.closest('.card');
+                
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Marking...';
+                
+                try {
+                    const formData = new FormData(this);
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        button.innerHTML = '✓ Read';
+                        button.classList.remove('btn-outline-info');
+                        button.classList.add('btn-info');
+                        
+                        // Update the unread count badge
+                        const badge = document.getElementById(`unread-badge-${feedId}`);
+                        if (badge) {
+                            const currentText = badge.textContent;
+                            if (currentText.includes('unread')) {
+                                const count = parseInt(currentText.match(/\d+/)?.[0] || '0');
+                                if (count > 1) {
+                                    badge.textContent = `${count - 1} unread`;
+                                } else {
+                                    badge.className = 'badge bg-secondary';
+                                    badge.textContent = 'All read';
+                                }
+                            }
+                        }
+                        
+                        // If on "unread" filter, fade out the article
+                        if (window.location.search.includes('filter=unread')) {
+                            articleCard.style.opacity = '0.5';
+                            setTimeout(() => {
+                                articleCard.remove();
+                            }, 1000);
+                        }
+                    } else {
+                        alert('Error: ' + (result.error || 'Failed to mark as read'));
+                        button.innerHTML = '✓ Mark as Read';
+                        button.disabled = false;
+                    }
+                } catch (error) {
+                    alert('Error marking as read: ' + error.message);
+                    button.innerHTML = '✓ Mark as Read';
+                    button.disabled = false;
+                }
+            });
+        });
+        
+        // Rotate chevron icon on collapse
+        document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(element => {
+            element.addEventListener('click', function() {
+                const icon = this.querySelector('.collapse-icon');
+                if (icon) {
+                    icon.classList.toggle('bi-chevron-right');
+                    icon.classList.toggle('bi-chevron-down');
+                }
+            });
+        });
+
+        // Mark all articles as read via AJAX
+        async function markAllAsRead(feedId, feedTitle) {
+            const button = document.getElementById(`mark-read-btn-${feedId}`);
+            const badge = document.getElementById(`unread-badge-${feedId}`);
+            
+            // Disable button during request
+            button.disabled = true;
+            button.innerHTML = '⏳';
+
+            try {
+                const response = await fetch(`/Feeds/MarkAllAsReadJson/${feedId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update badge
+                    badge.className = 'badge bg-secondary';
+                    badge.textContent = 'All read';
+                    
+                    // Keep button disabled
+                    button.innerHTML = '✓';
+                    
+                    // Show success message (optional)
+                    console.log(result.message);
+                } else {
+                    alert(result.message || 'Failed to mark articles as read');
+                    button.disabled = false;
+                    button.innerHTML = '✓';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to mark articles as read');
+                button.disabled = false;
+                button.innerHTML = '✓';
+            }
+        }
+        
+        // Toggle favorite status via AJAX
+        async function toggleFavorite(feedId, feedTitle) {
+            const button = document.getElementById(`favorite-btn-${feedId}`);
+            const originalIcon = button.textContent;
+            
+            // Disable button during request
+            button.disabled = true;
+
+            try {
+                const response = await fetch(`/Feeds/ToggleFavorite/${feedId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update button appearance
+                    if (result.isFavorite) {
+                        button.textContent = '★';
+                        button.className = 'btn btn-sm btn-warning';
+                        button.title = 'Remove from favorites';
+                    } else {
+                        button.textContent = '☆';
+                        button.className = 'btn btn-sm btn-outline-warning';
+                        button.title = 'Add to favorites';
+                    }
+                    button.disabled = false;
+                    
+                    // Reload page to resort feeds
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    alert(result.message || 'Failed to toggle favorite');
+                    button.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to toggle favorite');
+                button.textContent = originalIcon;
+                button.disabled = false;
+            }
+        }
+        
+        // Re-sync article dates via AJAX
+        async function resyncDates(feedId, feedTitle) {
+            if (!confirm(`Re-sync article dates for ${feedTitle}? This will update the publication dates for all articles in this feed.`)) {
+                return;
+            }
+
+            const button = document.getElementById(`resync-btn-${feedId}`);
+            const originalIcon = button.textContent;
+            
+            // Disable button during request
+            button.disabled = true;
+            button.textContent = '⏳';
+
+            try {
+                const response = await fetch(`/Feeds/ResyncDates/${feedId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    button.textContent = '✓';
+                    
+                    // Reload page to show updated dates
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    alert(result.message || 'Failed to re-sync dates');
+                    button.textContent = originalIcon;
+                    button.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to re-sync dates');
+                button.textContent = originalIcon;
+                button.disabled = false;
+            }
+        }
+    </script>
+    <style>
+        .collapse-icon {
+            transition: transform 0.3s ease;
+            display: inline-block;
+            font-style: normal;
+        }
+        .collapse-icon:before {
+            content: '▶';
+            font-size: 0.8em;
+        }
+        [aria-expanded="true"] .collapse-icon:before {
+            content: '▼';
+        }
+        .card-header:hover {
+            background-color: var(--bg-secondary);
+        }
+        .read-article {
+            background: linear-gradient(to right, rgba(200, 200, 200, 0.1), rgba(200, 200, 200, 0.05));
+            opacity: 0.85;
+        }
+        [data-theme="dark"] .read-article {
+            background: linear-gradient(to right, rgba(100, 100, 100, 0.15), rgba(100, 100, 100, 0.05));
+        }
+        .read-article .card-body {
+            color: var(--text-secondary);
+        }
+    </style>
+}

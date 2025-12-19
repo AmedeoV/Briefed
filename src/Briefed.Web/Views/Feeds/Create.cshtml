@@ -1,0 +1,46 @@
+@model Briefed.Web.Models.CreateFeedViewModel
+@{
+    ViewData["Title"] = "Add Feed";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h2 class="mb-4">Add New RSS Feed</h2>
+        
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            
+            <div class="mb-3">
+                <label asp-for="Url" class="form-label"></label>
+                <input asp-for="Url" class="form-control" placeholder="https://example.com/feed.xml" />
+                <span asp-validation-for="Url" class="text-danger"></span>
+                <div class="form-text">Enter the URL of the RSS or Atom feed you want to subscribe to.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" placeholder="Optional custom name" />
+                <span asp-for="Title" class="text-danger"></span>
+                <div class="form-text">Leave blank to use the feed's title.</div>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Add Feed</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+        
+        <div class="mt-4 p-3 bg-light rounded">
+            <h6>Popular Feeds:</h6>
+            <ul class="mb-0">
+                <li><a href="#" onclick="document.querySelector('input[name=Url]').value='https://hnrss.org/frontpage'; return false;">Hacker News</a></li>
+                <li><a href="#" onclick="document.querySelector('input[name=Url]').value='https://feeds.bbci.co.uk/news/rss.xml'; return false;">BBC News</a></li>
+                <li><a href="#" onclick="document.querySelector('input[name=Url]').value='https://techcrunch.com/feed/'; return false;">TechCrunch</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

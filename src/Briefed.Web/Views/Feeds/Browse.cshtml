@@ -1,0 +1,76 @@
+@model IEnumerable<Briefed.Web.Models.FeedDirectoryItem>
+@{
+    ViewData["Title"] = "Browse Feeds";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🔍 Browse Feed Directory</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Back to My Feeds</a>
+</div>
+
+<div class="mb-4">
+    <form asp-action="Browse" method="get" class="row g-2">
+        <div class="col">
+            <input type="text" name="search" class="form-control" placeholder="Search feeds by name, category, or description..." value="@ViewBag.SearchQuery" autofocus>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Search</button>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchQuery))
+            {
+                <a asp-action="Browse" class="btn btn-outline-secondary">Clear</a>
+            }
+        </div>
+    </form>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No feeds found matching your search. Try a different keyword.
+    </div>
+}
+else
+{
+    <div class="mb-3 text-muted">
+        Found @Model.Count() feed(s)
+        @if (!string.IsNullOrEmpty(ViewBag.SearchQuery))
+        {
+            <text> matching "@ViewBag.SearchQuery"</text>
+        }
+    </div>
+    
+    @foreach (var category in Model.GroupBy(f => f.Category).OrderBy(g => g.Key))
+    {
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">@category.Key</h5>
+            <div class="row">
+                @foreach (var feed in category)
+                {
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">@feed.Title</h6>
+                                <p class="card-text text-muted small mb-2">@feed.Description</p>
+                                <div class="d-flex gap-2">
+                                    <form asp-action="Create" method="post" class="flex-grow-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="Url" value="@feed.Url" />
+                                        <input type="hidden" name="Title" value="@feed.Title" />
+                                        <button type="submit" class="btn btn-sm btn-primary w-100">+ Subscribe</button>
+                                    </form>
+                                    <a href="@feed.Url" target="_blank" class="btn btn-sm btn-outline-secondary" title="Preview feed">🔗</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+<div class="mt-4 p-3 bg-light rounded">
+    <h6>Can't find what you're looking for?</h6>
+    <p class="mb-2 small">You can add any RSS or Atom feed manually:</p>
+    <a asp-action="Create" class="btn btn-sm btn-primary">+ Add Custom Feed</a>
+</div>

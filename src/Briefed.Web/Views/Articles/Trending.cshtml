@@ -1,0 +1,89 @@
+@model List<Briefed.Core.Models.TrendingArticle>
+@{
+    ViewData["Title"] = "Trending World News";
+    var category = ViewBag.Category as string ?? "general";
+    var categories = ViewBag.Categories as string[] ?? Array.Empty<string>();
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🔥 Trending World News</h2>
+        <div class="btn-group" role="group">
+            @foreach (var cat in categories)
+            {
+                <a href="@Url.Action("Trending", new { category = cat })" 
+                   class="btn btn-sm @(cat == category ? "btn-primary" : "btn-outline-primary")">
+                    @cat.ToUpper()
+                </a>
+            }
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-warning">
+            <h4 class="alert-heading">ℹ️ NewsAPI Key Required</h4>
+            <p>To view trending world news, you need to add your NewsAPI key to the configuration.</p>
+            <hr>
+            <p class="mb-0">
+                <strong>Steps:</strong>
+            </p>
+            <ol>
+                <li>Get a free API key at <a href="https://newsapi.org/" target="_blank" class="alert-link">newsapi.org</a></li>
+                <li>Add to <code>appsettings.json</code>: <code>"NewsApi": { "ApiKey": "your-key-here" }</code></li>
+                <li>Or set environment variable: <code>NewsApi__ApiKey=your-key-here</code></li>
+                <li>Restart the application</li>
+            </ol>
+            <p class="mb-0 mt-2"><small>Free tier includes 100 requests per day (up to 50 articles per request)</small></p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var article in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        @if (!string.IsNullOrEmpty(article.ImageUrl))
+                        {
+                            <img src="@article.ImageUrl" class="card-img-top" alt="@article.Title" style="height: 200px; object-fit: cover;" onerror="this.style.display='none'">
+                        }
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">
+                                <a href="@article.Url" target="_blank" class="text-dark text-decoration-none" rel="noopener noreferrer">
+                                    @article.Title
+                                </a>
+                            </h5>
+                            <p class="card-text text-muted flex-grow-1">@article.Description</p>
+                            <div class="mt-auto">
+                                <a href="@article.Url" target="_blank" class="btn btn-sm btn-outline-primary" rel="noopener noreferrer">
+                                    Read Full Article →
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <small class="text-muted">
+                                <strong>@article.Source</strong> • @article.PublishedAt.ToString("MMM dd, h:mm tt")
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+    }
+    
+    .card-title a:hover {
+        color: #0d6efd !important;
+    }
+</style>

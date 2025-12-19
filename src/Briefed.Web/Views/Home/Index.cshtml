@@ -1,0 +1,58 @@
+﻿@{
+    ViewData["Title"] = "Welcome to Briefed";
+}
+
+<div class="text-center">
+    <h1 class="display-3 mb-4">📰 Briefed</h1>
+    <p class="lead mb-4">Your intelligent RSS feed reader with AI-powered summaries</p>
+    
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <p class="text-muted">
+                Stay informed without the overload. Subscribe to your favorite RSS feeds, 
+                read articles seamlessly, and get AI-generated summaries powered by Ollama.
+            </p>
+        </div>
+    </div>
+    
+    <div class="mb-5">
+        <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-2">Get Started</a>
+        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary btn-lg">Login</a>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3" style="font-size: 3rem;">📡</div>
+                    <h5 class="card-title">Subscribe to Feeds</h5>
+                    <p class="card-text text-muted">
+                        Add your favorite RSS and Atom feeds in one place
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3" style="font-size: 3rem;">🤖</div>
+                    <h5 class="card-title">AI Summaries</h5>
+                    <p class="card-text text-muted">
+                        Get concise summaries powered by local Ollama AI
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3" style="font-size: 3rem;">💾</div>
+                    <h5 class="card-title">Save for Later</h5>
+                    <p class="card-text text-muted">
+                        Save articles with full content for offline reading
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

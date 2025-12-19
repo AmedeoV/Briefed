@@ -1,0 +1,46 @@
+@model IEnumerable<Briefed.Core.Entities.SavedArticle>
+@{
+    ViewData["Title"] = "Saved Articles";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>💾 Saved Articles</h2>
+    <a asp-action="Index" class="btn btn-outline-primary">Back to All Articles</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <h5>No saved articles</h5>
+        <p>You haven't saved any articles for offline reading yet.</p>
+        <p>When reading an article, click the "Save for Later" button to save it with full content for offline access.</p>
+        <a asp-action="Index" class="btn btn-primary">Browse Articles</a>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var saved in Model)
+        {
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@saved.Article.Title</h5>
+                        <p class="card-text text-muted small">
+                            <strong>@saved.Article.Feed.Title</strong><br />
+                            Saved: @saved.SavedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a asp-action="Read" asp-route-id="@saved.Article.Id" class="btn btn-sm btn-primary">Read</a>
+                        <form asp-action="DeleteSaved" asp-route-id="@saved.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('Remove this saved article?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: briefed-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - briefed-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: briefed-web
+    ports:
+      - "${WEB_PORT:-5167}:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - Ollama__BaseUrl=${OLLAMA_BASE_URL}
+      - Ollama__Model=${OLLAMA_MODEL}
+      - Ollama__TimeoutSeconds=${OLLAMA_TIMEOUT_SECONDS}
+      - Ollama__MaxContentLength=${OLLAMA_MAX_CONTENT_LENGTH}
+      - Groq__ApiKey=${GROQ_API_KEY}
+      - Groq__Model=${GROQ_MODEL}
+      - Groq__TimeoutSeconds=${GROQ_TIMEOUT_SECONDS}
+      - NewsApi__ApiKey=${NEWSAPI_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - briefed-network
+
+volumes:
+  postgres_data:
+    external: true
+    name: docker_postgres_data
+
+networks:
+  briefed-network:
+    driver: bridge

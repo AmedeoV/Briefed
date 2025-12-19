@@ -1,0 +1,25 @@
+# Development Dockerfile with hot reload support
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dev
+
+WORKDIR /src
+
+# Copy solution and project files
+COPY ["Briefed.sln", "./"]
+COPY ["src/Briefed.Core/Briefed.Core.csproj", "src/Briefed.Core/"]
+COPY ["src/Briefed.Infrastructure/Briefed.Infrastructure.csproj", "src/Briefed.Infrastructure/"]
+COPY ["src/Briefed.Web/Briefed.Web.csproj", "src/Briefed.Web/"]
+
+# Restore dependencies
+RUN dotnet restore "Briefed.sln"
+
+# Copy all source code
+COPY ["src/", "src/"]
+
+# Expose ports
+EXPOSE 8080
+
+# Set working directory to web project
+WORKDIR /src/src/Briefed.Web
+
+# Use dotnet watch for hot reload
+ENTRYPOINT ["dotnet", "watch", "run", "--no-restore", "--urls", "http://0.0.0.0:8080"]
