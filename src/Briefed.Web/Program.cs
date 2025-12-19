@@ -79,12 +79,6 @@ if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard("/hangfire");
 }
 
-// Configure recurring job for feed updates
-RecurringJob.AddOrUpdate<FeedUpdateService>(
-    "update-all-feeds",
-    service => service.UpdateAllFeedsAsync(),
-    Cron.Hourly);
-
 app.MapStaticAssets();
 
 app.MapControllerRoute(
@@ -92,5 +86,14 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+// Configure recurring job for feed updates (after app is built)
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddOrUpdate<FeedUpdateService>(
+        "update-all-feeds",
+        service => service.UpdateAllFeedsAsync(),
+        Cron.Hourly());
+}
 
 app.Run();
