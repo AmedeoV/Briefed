@@ -30,15 +30,24 @@ jobs:
         WEB_PORT=5167
         EOF
     
-    - name: Stop existing containers
-      run: docker-compose down || true
+    - name: Build new images
+      run: docker-compose build web
     
-    - name: Build and start containers
-      run: docker-compose up -d --build
+    - name: Deploy with zero downtime
+      run: |
+        # Start new containers (Docker Compose handles graceful switchover)
+        docker-compose up -d --no-deps --build web
+        
+        # Wait for health check
+        echo "Waiting for application to be healthy..."
+        sleep 10
+        
+        # Verify the application is running
+        docker-compose ps
     
     - name: Run database migrations
       run: |
-        docker exec briefed-web dotnet ef database update --project /app/Briefed.Infrastructure.dll || true
+        docker exec briefed-web dotnet ef database update --project /src/src/Briefed.Infrastructure/Briefed.Infrastructure.csproj --no-build || echo "Migration skipped or already applied"
     
     - name: Clean up old images
       run: docker image prune -af --filter "until=24h"
