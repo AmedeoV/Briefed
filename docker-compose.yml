@@ -27,7 +27,8 @@ services:
     ports:
       - "${WEB_PORT:-5167}:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - Ollama__BaseUrl=${OLLAMA_BASE_URL}
       - Ollama__Model=${OLLAMA_MODEL}
@@ -42,6 +43,7 @@ services:
         condition: service_healthy
     networks:
       - briefed-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:

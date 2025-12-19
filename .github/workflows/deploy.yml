@@ -1,0 +1,44 @@
+name: Deploy to briefed.step0fail.com
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        POSTGRES_DB=briefed
+        POSTGRES_USER=briefed_user
+        POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+        ASPNETCORE_ENVIRONMENT=Production
+        OLLAMA_BASE_URL=http://host.docker.internal:11434
+        OLLAMA_MODEL=llama3.2:1b
+        OLLAMA_TIMEOUT_SECONDS=300
+        OLLAMA_MAX_CONTENT_LENGTH=10000
+        NEWSAPI_KEY=${{ secrets.NEWSAPI_KEY }}
+        GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+        GROQ_MODEL=llama-3.3-70b-versatile
+        GROQ_TIMEOUT_SECONDS=30
+        WEB_PORT=5167
+        EOF
+    
+    - name: Stop existing containers
+      run: docker-compose down || true
+    
+    - name: Build and start containers
+      run: docker-compose up -d --build
+    
+    - name: Run database migrations
+      run: |
+        docker exec briefed-web dotnet ef database update --project /app/Briefed.Infrastructure.dll || true
+    
+    - name: Clean up old images
+      run: docker image prune -af --filter "until=24h"
