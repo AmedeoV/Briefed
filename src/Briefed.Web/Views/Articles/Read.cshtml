@@ -42,6 +42,9 @@
             <button type="button" class="btn btn-success" id="summarizeBtn" data-article-id="@Model.Article.Id">
                 ✨ Summarize with AI
             </button>
+            <button type="button" class="btn btn-warning" id="factCheckBtn" data-article-id="@Model.Article.Id">
+                🔍 Fact Check
+            </button>
             <a href="@Model.Article.Url" target="_blank" class="btn btn-outline-secondary">Open Original</a>
         </div>
 
@@ -67,6 +70,15 @@
 
     <div class="col-lg-4">
         <div class="position-sticky" style="top: 20px;">
+            <div id="factCheckPanel" class="card mb-3" style="display: none;">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">🔍 Fact Check Results</h5>
+                </div>
+                <div class="card-body">
+                    <div id="factCheckContent"></div>
+                </div>
+            </div>
+            
             <div id="summaryPanel" class="card" style="display: none;">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">🤖 AI Summary</h5>
@@ -129,6 +141,65 @@
                 }
             } catch (error) {
                 alert('Error generating summary: ' + error.message);
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        });
+
+        document.getElementById('factCheckBtn').addEventListener('click', async function() {
+            const button = this;
+            const originalText = button.innerHTML;
+            const factCheckPanel = document.getElementById('factCheckPanel');
+            const factCheckContent = document.getElementById('factCheckContent');
+            
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Fact checking...';
+            
+            try {
+                // Get the article content
+                const articleContent = document.querySelector('.article-content').innerText;
+                
+                const response = await fetch('/FactCheck/CheckArticle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ articleText: articleContent })
+                });
+                
+                const results = await response.json();
+                
+                if (results && results.length > 0) {
+                    let html = '<div class="list-group list-group-flush">';
+                    results.forEach((result, index) => {
+                        const ratingClass = result.textualRating?.toLowerCase().includes('false') ? 'danger' : 
+                                          result.textualRating?.toLowerCase().includes('true') ? 'success' : 'warning';
+                        html += `
+                            <div class="list-group-item px-0">
+                                <h6 class="mb-2"><strong>Claim ${index + 1}:</strong></h6>
+                                <p class="mb-2 small">${result.claim || 'N/A'}</p>
+                                ${result.textualRating ? `<span class="badge bg-${ratingClass}">${result.textualRating}</span>` : ''}
+                                ${result.publisher ? `<p class="mb-1 mt-2 small"><strong>Source:</strong> ${result.publisher}</p>` : ''}
+                                ${result.claimReview ? `<p class="mb-1 small text-muted">${result.claimReview}</p>` : ''}
+                                ${result.url ? `<a href="${result.url}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Read Full Review</a>` : ''}
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    factCheckContent.innerHTML = html;
+                    factCheckPanel.style.display = 'block';
+                    button.innerHTML = '✓ Fact Checked';
+                    button.classList.remove('btn-warning');
+                    button.classList.add('btn-outline-warning');
+                } else {
+                    factCheckContent.innerHTML = '<p class="text-muted mb-0">No fact-checks found for claims in this article.</p>';
+                    factCheckPanel.style.display = 'block';
+                    button.innerHTML = '✓ No Matches Found';
+                    button.classList.remove('btn-warning');
+                    button.classList.add('btn-outline-warning');
+                }
+            } catch (error) {
+                alert('Error fact checking: ' + error.message);
                 button.innerHTML = originalText;
                 button.disabled = false;
             }
