@@ -58,11 +58,7 @@ public class FactCheckService : IFactCheckService
         if (!_isConfigured)
         {
             _logger.LogWarning("Google Fact Check API key not configured");
-            return new FactCheckResponse 
-            { 
-                Claim = claim,
-                ClaimReview = "Fact-checking service not configured"
-            };
+            return await VerifyClaimWithAIAsync(claim);
         }
 
         try
@@ -81,12 +77,8 @@ public class FactCheckService : IFactCheckService
             
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Fact check API returned status {Status}", response.StatusCode);
-                return new FactCheckResponse 
-                { 
-                    Claim = claim,
-                    ClaimReview = "No fact-checks found"
-                };
+                _logger.LogWarning("Fact check API returned status {Status}, falling back to AI", response.StatusCode);
+                return await VerifyClaimWithAIAsync(claim);
             }
 
             var content = await response.Content.ReadAsStringAsync();
@@ -97,11 +89,8 @@ public class FactCheckService : IFactCheckService
 
             if (result?.Claims == null || !result.Claims.Any())
             {
-                return new FactCheckResponse 
-                { 
-                    Claim = claim,
-                    ClaimReview = "No fact-checks found for this claim"
-                };
+                // No existing fact-checks found, use AI to verify
+                return await VerifyClaimWithAIAsync(claim);
             }
 
             // Get the first (most relevant) claim review
@@ -116,16 +105,94 @@ public class FactCheckService : IFactCheckService
                 Publisher = firstReview?.Publisher?.Name,
                 Url = firstReview?.Url,
                 TextualRating = firstReview?.TextualRating,
-                ReviewDate = firstReview?.ReviewDate
+                ReviewDate = firstReview?.ReviewDate,
+                Source = "Google Fact Check Database",
+                Confidence = "High"
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking claim: {Claim}", claim);
-            return new FactCheckResponse 
-            { 
+            _logger.LogError(ex, "Error checking claim: {Claim}, falling back to AI", claim);
+            return await VerifyClaimWithAIAsync(claim);
+        }
+    }
+
+    private async Task<FactCheckResponse> VerifyClaimWithAIAsync(string claim)
+    {
+        try
+        {
+            _logger.LogInformation("Using AI to verify claim: {Claim}", claim);
+
+            var prompt = $@"You are a fact-checking assistant. Analyze this claim and provide:
+1. A brief verdict (True, False, Mostly True, Mostly False, or Unverifiable)
+2. Your reasoning (2-3 sentences)
+3. Confidence level (High, Medium, or Low)
+
+Format your response EXACTLY as:
+VERDICT: [verdict]
+REASONING: [your reasoning]
+CONFIDENCE: [High/Medium/Low]
+
+Claim: {claim}";
+
+            var aiResponse = await _groqService.GenerateSummaryAsync(prompt);
+            
+            if (string.IsNullOrWhiteSpace(aiResponse))
+            {
+                return new FactCheckResponse
+                {
+                    Claim = claim,
+                    ClaimReview = "Unable to verify this claim",
+                    TextualRating = "Unverifiable",
+                    Source = "AI Analysis",
+                    Confidence = "Low",
+                    Reasoning = "No analysis available"
+                };
+            }
+
+            // Parse AI response
+            var lines = aiResponse.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            string verdict = "Unverifiable";
+            string reasoning = "Analysis provided";
+            string confidence = "Medium";
+
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("VERDICT:", StringComparison.OrdinalIgnoreCase))
+                {
+                    verdict = line.Substring(8).Trim();
+                }
+                else if (line.StartsWith("REASONING:", StringComparison.OrdinalIgnoreCase))
+                {
+                    reasoning = line.Substring(10).Trim();
+                }
+                else if (line.StartsWith("CONFIDENCE:", StringComparison.OrdinalIgnoreCase))
+                {
+                    confidence = line.Substring(11).Trim();
+                }
+            }
+
+            return new FactCheckResponse
+            {
                 Claim = claim,
-                ClaimReview = "Error checking claim"
+                ClaimReview = reasoning,
+                TextualRating = verdict,
+                Rating = verdict,
+                Source = "AI Analysis (Groq)",
+                Confidence = confidence,
+                Reasoning = reasoning
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error verifying claim with AI: {Claim}", claim);
+            return new FactCheckResponse
+            {
+                Claim = claim,
+                ClaimReview = "Error during verification",
+                TextualRating = "Unverifiable",
+                Source = "AI Analysis",
+                Confidence = "Low"
             };
         }
     }
@@ -176,6 +243,13 @@ Article:
                 
                 // Small delay to avoid rate limiting
                 await Task.Delay(500);
+            }
+
+            // If no matches found, still return the extracted claims
+            if (factCheckResults.All(r => r.ClaimReview?.Contains("No fact-checks found") == true || 
+                                         r.ClaimReview?.Contains("not found") == true))
+            {
+                _logger.LogInformation("No existing fact-checks found in database for any extracted claims");
             }
 
             return factCheckResults;

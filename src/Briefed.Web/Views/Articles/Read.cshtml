@@ -174,13 +174,24 @@
                     results.forEach((result, index) => {
                         const ratingClass = result.textualRating?.toLowerCase().includes('false') ? 'danger' : 
                                           result.textualRating?.toLowerCase().includes('true') ? 'success' : 'warning';
+                        
+                        const confidenceClass = result.confidence === 'High' ? 'success' : 
+                                              result.confidence === 'Medium' ? 'warning' : 'secondary';
+                        
                         html += `
                             <div class="list-group-item px-0">
                                 <h6 class="mb-2"><strong>Claim ${index + 1}:</strong></h6>
                                 <p class="mb-2 small">${result.claim || 'N/A'}</p>
-                                ${result.textualRating ? `<span class="badge bg-${ratingClass}">${result.textualRating}</span>` : ''}
-                                ${result.publisher ? `<p class="mb-1 mt-2 small"><strong>Source:</strong> ${result.publisher}</p>` : ''}
-                                ${result.claimReview ? `<p class="mb-1 small text-muted">${result.claimReview}</p>` : ''}
+                                
+                                <div class="mb-2">
+                                    ${result.textualRating ? `<span class="badge bg-${ratingClass}">${result.textualRating}</span>` : ''}
+                                    ${result.confidence ? `<span class="badge bg-${confidenceClass} ms-1">${result.confidence} Confidence</span>` : ''}
+                                    ${result.source ? `<span class="badge bg-info ms-1">${result.source}</span>` : ''}
+                                </div>
+                                
+                                ${result.reasoning ? `<p class="mb-2 small"><strong>Analysis:</strong> ${result.reasoning}</p>` : ''}
+                                ${result.publisher ? `<p class="mb-1 small"><strong>Source:</strong> ${result.publisher}</p>` : ''}
+                                ${result.claimReview && !result.reasoning ? `<p class="mb-1 small text-muted">${result.claimReview}</p>` : ''}
                                 ${result.url ? `<a href="${result.url}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Read Full Review</a>` : ''}
                             </div>
                         `;

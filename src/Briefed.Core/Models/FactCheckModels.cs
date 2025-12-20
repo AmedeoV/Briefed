@@ -9,6 +9,11 @@ public class FactCheckResponse
     public string? Url { get; set; }
     public string? TextualRating { get; set; }
     public DateTime? ReviewDate { get; set; }
+    
+    // AI-powered fact check fields
+    public string? Reasoning { get; set; }
+    public string? Confidence { get; set; } // High, Medium, Low
+    public string? Source { get; set; } // "Google Fact Check" or "AI Analysis"
 }
 
 public class FactCheckClaimResult
