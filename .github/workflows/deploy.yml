@@ -27,6 +27,7 @@ jobs:
         GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
         GROQ_MODEL=llama-3.3-70b-versatile
         GROQ_TIMEOUT_SECONDS=30
+        GOOGLE_FACTCHECK_API_KEY=${{ secrets.GOOGLE_FACTCHECK_API_KEY }}
         WEB_PORT=5167
         EOF
     
