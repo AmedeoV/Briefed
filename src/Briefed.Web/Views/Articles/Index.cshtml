@@ -568,7 +568,7 @@ else
             position: absolute;
             right: 0;
             top: 0;
-            bottom: 0;
+            height: 100%;
             width: 120px;
             background: linear-gradient(to left, #28a745, rgba(40, 167, 69, 0.8));
             display: flex;
@@ -593,9 +593,10 @@ else
             text-align: center;
         }
         
-        .swipeable-feed-header > div:first-of-type {
+        .swipeable-feed-header > .d-flex {
             position: relative;
             z-index: 1;
+            background: inherit;
         }
     </style>
 }
