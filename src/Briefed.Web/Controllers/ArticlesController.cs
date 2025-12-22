@@ -335,7 +335,12 @@ public class ArticlesController : Controller
             var summaryType = request.SummaryType ?? "comprehensive";
             var summary = await _summaryService.GenerateSummaryAsync(0, content, summaryType); // Pass 0 since there's no article ID
             
-            return Json(new { success = true, summary = summary.Content });
+            // Get the appropriate summary content based on type
+            var summaryContent = summaryType == "concise"
+                ? summary.ConciseContent
+                : summary.ComprehensiveContent;
+            
+            return Json(new { success = true, summary = summaryContent ?? summary.Content });
         }
         catch (Exception ex)
         {
