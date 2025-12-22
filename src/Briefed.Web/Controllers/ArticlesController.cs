@@ -77,15 +77,25 @@ public class ArticlesController : Controller
                 articles.Count(), userId);
         }
         
-        // Try to get unread counts from cache
-        if (!_cache.TryGetValue(unreadCacheKey, out Dictionary<int, int> unreadCountsByFeed))
+        // Try to get read article IDs and unread counts from cache
+        var readArticleIdsCacheKey = $"read_article_ids_{userId}";
+        
+        if (!_cache.TryGetValue(readArticleIdsCacheKey, out HashSet<int> readArticleIds))
         {
-            // Calculate unread counts per feed efficiently
-            var readArticleIds = _context.UserArticles
+            readArticleIds = _context.UserArticles
                 .Where(ua => ua.UserId == userId && ua.IsRead)
                 .Select(ua => ua.ArticleId)
                 .ToHashSet();
             
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5))
+                .SetSlidingExpiration(TimeSpan.FromMinutes(2));
+            
+            _cache.Set(readArticleIdsCacheKey, readArticleIds, cacheOptions);
+        }
+        
+        if (!_cache.TryGetValue(unreadCacheKey, out Dictionary<int, int> unreadCountsByFeed))
+        {
             unreadCountsByFeed = articles
                 .GroupBy(a => a.FeedId)
                 .ToDictionary(
@@ -100,13 +110,7 @@ public class ArticlesController : Controller
             _cache.Set(unreadCacheKey, unreadCountsByFeed, cacheOptions);
         }
         
-        // Get read article IDs for styling
-        var readArticleIds2 = _context.UserArticles
-            .Where(ua => ua.UserId == userId && ua.IsRead)
-            .Select(ua => ua.ArticleId)
-            .ToHashSet();
-        
-        ViewBag.ReadArticleIds = readArticleIds2;
+        ViewBag.ReadArticleIds = readArticleIds;
         ViewBag.UnreadCountsByFeed = unreadCountsByFeed;
         
         // Get favorite feeds

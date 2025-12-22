@@ -57,40 +57,12 @@ public class ArticleService : IArticleService
                     select article;
         }
 
-        var articles = await query
+        return await query
             .Include(a => a.Feed)
             .Include(a => a.Summary)
             .OrderByDescending(a => a.PublishedAt)
             .AsNoTracking()
             .ToListAsync();
-
-        // Strip HTML from descriptions after loading
-        foreach (var article in articles)
-        {
-            if (!string.IsNullOrEmpty(article.Description))
-            {
-                var cleaned = article.Description;
-                
-                // Decode HTML entities first
-                cleaned = System.Net.WebUtility.HtmlDecode(cleaned);
-                
-                // Remove all HTML tags (loop until no more tags found)
-                string previous;
-                do
-                {
-                    previous = cleaned;
-                    cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"<[^>]*>", string.Empty);
-                } while (previous != cleaned);
-                
-                // Clean up extra whitespace
-                cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", " ");
-                cleaned = cleaned.Trim();
-                
-                article.Description = cleaned;
-            }
-        }
-
-        return articles;
     }
 
     public async Task<Article> CreateArticleAsync(Article article)
