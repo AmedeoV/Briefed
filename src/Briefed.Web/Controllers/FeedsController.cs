@@ -457,6 +457,7 @@ public class FeedsController : Controller
     }
     
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAllAsReadJson(int id)
     {
         try
@@ -470,6 +471,12 @@ public class FeedsController : Controller
             }
             
             await _articleService.MarkAllAsReadForFeedAsync(userId, id);
+            
+            // Clear cache to ensure counts are refreshed
+            _cache.Remove($"articles_{userId}_all");
+            _cache.Remove($"articles_{userId}_unread");
+            _cache.Remove($"articles_{userId}_read");
+            _cache.Remove($"unread_counts_{userId}");
             
             return Json(new { success = true, message = $"All articles from {feed.Title} marked as read." });
         }

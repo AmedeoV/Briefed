@@ -507,21 +507,36 @@ else
         async function markAllAsRead(feedId, feedTitle) {
             const button = document.getElementById(`mark-read-btn-${feedId}`);
             const badge = document.getElementById(`unread-badge-${feedId}`);
+            const header = document.querySelector(`[data-feed-id="${feedId}"]`);
             
             // Disable button during request
             button.disabled = true;
             button.innerHTML = '⏳';
 
             try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                console.log('Marking feed as read:', feedId, 'Token:', token ? 'present' : 'missing');
+                
+                const formData = new FormData();
+                if (token) {
+                    formData.append('__RequestVerificationToken', token);
+                }
+                
                 const response = await fetch(`/Feeds/MarkAllAsReadJson/${feedId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                    }
+                    body: formData
                 });
 
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Response error:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
                 const result = await response.json();
+                console.log('Result:', result);
 
                 if (result.success) {
                     // Update badge
@@ -530,6 +545,37 @@ else
                     
                     // Keep button disabled
                     button.innerHTML = '✓';
+                    
+                    // Update header's unread count
+                    if (header) {
+                        header.dataset.unreadCount = '0';
+                    }
+                    
+                    // Mark all articles in this feed as read visually
+                    const feedCollapse = document.getElementById(`feed-${feedId}`);
+                    if (feedCollapse) {
+                        const articleDivs = feedCollapse.querySelectorAll('.border-bottom.p-3');
+                        articleDivs.forEach(div => {
+                            // Add read-article class if not already present
+                            if (!div.classList.contains('read-article')) {
+                                div.classList.add('read-article');
+                            }
+                            
+                            // Update article title link to muted
+                            const titleLink = div.querySelector('h5 a');
+                            if (titleLink && !titleLink.classList.contains('text-muted')) {
+                                titleLink.classList.remove('text-dark');
+                                titleLink.classList.add('text-muted');
+                            }
+                            
+                            // Disable "Mark as Read" button for each article
+                            const markReadBtn = div.querySelector('.mark-read-form button');
+                            if (markReadBtn) {
+                                markReadBtn.disabled = true;
+                                markReadBtn.classList.add('disabled');
+                            }
+                        });
+                    }
                     
                     // Show success message (optional)
                     console.log(result.message);
