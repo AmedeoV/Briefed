@@ -86,11 +86,14 @@ using (var scope = app.Services.CreateScope())
         await roleManager.CreateAsync(new IdentityRole("Admin"));
     }
     
-    // Assign Admin role to the first user in the database
-    var firstUser = userManager.Users.FirstOrDefault();
-    if (firstUser != null && !await userManager.IsInRoleAsync(firstUser, "Admin"))
+    // Assign Admin role to admin@briefed.com specifically
+    var adminUser = await userManager.FindByEmailAsync("admin@briefed.com");
+    if (adminUser != null)
     {
-        await userManager.AddToRoleAsync(firstUser, "Admin");
+        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
     }
 }
 
