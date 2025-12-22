@@ -69,13 +69,13 @@ public class ArticlesController : Controller
                 .SetSlidingExpiration(TimeSpan.FromMinutes(2));
             
             _cache.Set(cacheKey, articles, cacheOptions);
-            _logger.LogInformation("Cached {Count} articles for user {UserId} with filter {Filter}", 
-                articles.Count(), userId, filter);
+            _logger.LogInformation("Cached {Count} articles for user {UserId} with filter {Filter}. Sample article IDs: [{Ids}]", 
+                articles.Count(), userId, filter, string.Join(", ", articles.Take(10).Select(a => a.Id)));
         }
         else
         {
-            _logger.LogInformation("Retrieved {Count} articles from cache for user {UserId}", 
-                articles.Count(), userId);
+            _logger.LogInformation("Retrieved {Count} articles from cache for user {UserId}. Sample article IDs: [{Ids}]", 
+                articles.Count(), userId, string.Join(", ", articles.Take(10).Select(a => a.Id)));
         }
         
         // Try to get read article IDs and unread counts from cache
