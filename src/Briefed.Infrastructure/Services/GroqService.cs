@@ -57,7 +57,7 @@ public class GroqService : IGroqService
                     new
                     {
                         role = "system",
-                        content = "You are a news article summarizer. Provide a concise summary of the article."
+                        content = "You are a news article summarizer. Provide a comprehensive yet concise summary of the article, capturing all key points."
                     },
                     new
                     {
@@ -66,7 +66,7 @@ public class GroqService : IGroqService
                     }
                 },
                 temperature = 0.3,
-                max_tokens = 150
+                max_tokens = 300
             };
 
             _logger.LogDebug("Sending request to Groq API");

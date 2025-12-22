@@ -42,7 +42,7 @@ public class OllamaService : IOllamaService
                 contentToSummarize = text.Substring(0, _maxContentLength) + "\n\n[Content truncated...]";
             }
             
-            var prompt = $@"Summarize this article:
+            var prompt = $@"Provide a comprehensive yet concise summary of this article, capturing all key points:
 
 {contentToSummarize}";
 
@@ -54,7 +54,7 @@ public class OllamaService : IOllamaService
                 options = new
                 {
                     temperature = 0.3,
-                    num_predict = 150
+                    num_predict = 300
                 }
             };
 
