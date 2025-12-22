@@ -148,8 +148,8 @@
         let touchStartY = 0;
         let touchEndX = 0;
         let touchEndY = 0;
-        const swipeThreshold = 80; // Minimum distance for a swipe
-        const edgeThreshold = 30; // Detect swipes starting near left edge
+        const swipeThreshold = 60; // Minimum distance for a swipe (reduced from 80)
+        const edgeThreshold = 100; // Detect swipes starting near left edge (increased from 30)
 
         document.addEventListener('touchstart', function(e) {
             touchStartX = e.changedTouches[0].screenX;
@@ -166,21 +166,20 @@
             const deltaX = touchEndX - touchStartX;
             const deltaY = touchEndY - touchStartY;
             
-            // Check if swipe is primarily horizontal
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // Check if swipe is primarily horizontal (not vertical scrolling)
+            if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+                const navbarCollapse = document.querySelector('.navbar-collapse');
+                if (!navbarCollapse) return;
+                
                 // Swipe right from left edge to open menu
-                if (deltaX > swipeThreshold && touchStartX < edgeThreshold) {
-                    const navbarCollapse = document.querySelector('.navbar-collapse');
+                if (deltaX > swipeThreshold && touchStartX < edgeThreshold && !navbarCollapse.classList.contains('show')) {
                     const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
                     bsCollapse.show();
                 }
-                // Optional: Swipe left to close menu if it's open
-                else if (deltaX < -swipeThreshold) {
-                    const navbarCollapse = document.querySelector('.navbar-collapse');
-                    if (navbarCollapse.classList.contains('show')) {
-                        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
-                        bsCollapse.hide();
-                    }
+                // Swipe left to close menu if it's open
+                else if (deltaX < -swipeThreshold && navbarCollapse.classList.contains('show')) {
+                    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
+                    bsCollapse.hide();
                 }
             }
         }
