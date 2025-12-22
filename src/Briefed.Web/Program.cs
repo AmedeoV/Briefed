@@ -56,6 +56,9 @@ builder.Services.AddScoped<IOllamaService, OllamaService>();
 builder.Services.AddScoped<FeedUpdateService>();
 builder.Services.AddScoped<OpmlImportService>();
 
+// Add background services
+builder.Services.AddHostedService<TrendingSummaryCleanupService>();
+
 // Add Hangfire for background jobs
 builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)

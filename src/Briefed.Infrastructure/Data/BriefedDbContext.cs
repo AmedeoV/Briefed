@@ -14,6 +14,7 @@ public class BriefedDbContext : IdentityDbContext<User>, IDataProtectionKeyConte
     public DbSet<Feed> Feeds => Set<Feed>();
     public DbSet<Article> Articles => Set<Article>();
     public DbSet<Summary> Summaries => Set<Summary>();
+    public DbSet<TrendingSummary> TrendingSummaries => Set<TrendingSummary>();
     public DbSet<UserFeed> UserFeeds => Set<UserFeed>();
     public DbSet<UserArticle> UserArticles => Set<UserArticle>();
     public DbSet<SavedArticle> SavedArticles => Set<SavedArticle>();
@@ -62,6 +63,18 @@ public class BriefedDbContext : IdentityDbContext<User>, IDataProtectionKeyConte
                 .WithOne(a => a.Summary)
                 .HasForeignKey<Summary>(e => e.ArticleId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // TrendingSummary configuration
+        modelBuilder.Entity<TrendingSummary>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.UrlHash).IsRequired().HasMaxLength(64);
+            entity.HasIndex(e => e.UrlHash);
+            entity.Property(e => e.Url).IsRequired().HasMaxLength(2000);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.Model).IsRequired().HasMaxLength(100);
+            entity.HasIndex(e => e.ExpiresAt);
         });
 
         // UserFeed configuration (many-to-many)
