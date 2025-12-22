@@ -463,14 +463,19 @@ public class FeedsController : Controller
         try
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            _logger.LogInformation("MarkAllAsReadJson called for FeedId={FeedId}, UserId={UserId}", id, userId);
+            
             var feed = await _context.Feeds.FindAsync(id);
             
             if (feed == null)
             {
+                _logger.LogWarning("Feed not found: FeedId={FeedId}", id);
                 return Json(new { success = false, message = "Feed not found" });
             }
             
+            _logger.LogInformation("Marking all articles as read for feed {FeedTitle} (Id={FeedId})", feed.Title, id);
             await _articleService.MarkAllAsReadForFeedAsync(userId, id);
+            _logger.LogInformation("Successfully marked all articles as read for feed {FeedId}", id);
             
             // Clear cache to ensure counts are refreshed
             _cache.Remove($"articles_{userId}_all");

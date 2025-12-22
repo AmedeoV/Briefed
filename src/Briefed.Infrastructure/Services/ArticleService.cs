@@ -106,27 +106,37 @@ public class ArticleService : IArticleService
 
     public async Task MarkAllAsReadForFeedAsync(string userId, int feedId)
     {
+        _logger.LogInformation("MarkAllAsReadForFeedAsync: Starting for UserId={UserId}, FeedId={FeedId}", userId, feedId);
+        
         var articleIds = await _context.Articles
             .Where(a => a.FeedId == feedId)
             .Select(a => a.Id)
             .ToListAsync();
 
+        _logger.LogInformation("MarkAllAsReadForFeedAsync: Found {Count} articles for feed {FeedId}", articleIds.Count, feedId);
+
         var existingUserArticles = await _context.UserArticles
             .Where(ua => ua.UserId == userId && articleIds.Contains(ua.ArticleId))
             .ToListAsync();
+
+        _logger.LogInformation("MarkAllAsReadForFeedAsync: Found {Count} existing UserArticle entries", existingUserArticles.Count);
 
         var existingArticleIds = existingUserArticles.Select(ua => ua.ArticleId).ToHashSet();
         var now = DateTime.UtcNow;
 
         // Mark existing ones as read
+        int markedCount = 0;
         foreach (var userArticle in existingUserArticles)
         {
             if (!userArticle.IsRead)
             {
                 userArticle.IsRead = true;
                 userArticle.ReadAt = now;
+                markedCount++;
             }
         }
+        
+        _logger.LogInformation("MarkAllAsReadForFeedAsync: Marked {Count} existing articles as read", markedCount);
 
         // Create new UserArticle entries for articles that don't have them yet
         var newUserArticles = articleIds
@@ -143,9 +153,11 @@ public class ArticleService : IArticleService
         if (newUserArticles.Any())
         {
             _context.UserArticles.AddRange(newUserArticles);
+            _logger.LogInformation("MarkAllAsReadForFeedAsync: Created {Count} new UserArticle entries", newUserArticles.Count);
         }
 
-        await _context.SaveChangesAsync();
+        var changes = await _context.SaveChangesAsync();
+        _logger.LogInformation("MarkAllAsReadForFeedAsync: SaveChangesAsync completed with {Changes} changes", changes);
     }
 
     public async Task<string?> GetArticleContentAsync(string url)
