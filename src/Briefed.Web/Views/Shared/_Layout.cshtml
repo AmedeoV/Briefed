@@ -148,8 +148,7 @@
         let touchStartY = 0;
         let touchEndX = 0;
         let touchEndY = 0;
-        const swipeThreshold = 60; // Minimum distance for a swipe (reduced from 80)
-        const edgeThreshold = 100; // Detect swipes starting near left edge (increased from 30)
+        const swipeThreshold = 60; // Minimum distance for a swipe
 
         document.addEventListener('touchstart', function(e) {
             touchStartX = e.changedTouches[0].screenX;
@@ -171,8 +170,8 @@
                 const navbarCollapse = document.querySelector('.navbar-collapse');
                 if (!navbarCollapse) return;
                 
-                // Swipe right from left edge to open menu
-                if (deltaX > swipeThreshold && touchStartX < edgeThreshold && !navbarCollapse.classList.contains('show')) {
+                // Swipe right to open menu
+                if (deltaX > swipeThreshold && !navbarCollapse.classList.contains('show')) {
                     const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
                     bsCollapse.show();
                 }
