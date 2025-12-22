@@ -37,7 +37,7 @@ services:
       - Groq__ApiKey=${GROQ_API_KEY}
       - Groq__Model=${GROQ_MODEL}
       - Groq__TimeoutSeconds=${GROQ_TIMEOUT_SECONDS}
-      - NewsApi__ApiKey=${NEWSAPI_KEY}
+      - GNews__ApiKey=${GNEWS_API_KEY}
       - GoogleFactCheck__ApiKey=${GOOGLE_FACTCHECK_API_KEY}
     depends_on:
       postgres:

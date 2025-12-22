@@ -1,40 +1,53 @@
 @model List<Briefed.Core.Models.TrendingArticle>
 @{
     ViewData["Title"] = "Trending World News";
-    var category = ViewBag.Category as string ?? "general";
+    var category = ViewBag.Category as string;
+    var country = ViewBag.Country as string;
     var categories = ViewBag.Categories as string[] ?? Array.Empty<string>();
+    var countries = ViewBag.Countries as Dictionary<string, string> ?? new Dictionary<string, string>();
 }
 
 <div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
         <h2>🔥 Trending World News</h2>
-        <div class="btn-group" role="group">
-            @foreach (var cat in categories)
-            {
-                <a href="@Url.Action("Trending", new { category = cat })" 
-                   class="btn btn-sm @(cat == category ? "btn-primary" : "btn-outline-primary")">
-                    @cat.ToUpper()
-                </a>
-            }
+        <div class="d-flex gap-2 flex-wrap">
+            <div class="btn-group" role="group" aria-label="Country filter">
+                @foreach (var kvp in countries)
+                {
+                    <a href="@Url.Action("Trending", new { category = category, country = string.IsNullOrEmpty(kvp.Key) ? null : kvp.Key })" 
+                       class="btn btn-sm @(kvp.Key == (country ?? "") ? "btn-success" : "btn-outline-success")">
+                        @kvp.Value
+                    </a>
+                }
+            </div>
+            <div class="btn-group" role="group" aria-label="Category filter">
+                @foreach (var cat in categories)
+                {
+                    <a href="@Url.Action("Trending", new { category = cat, country = country })" 
+                       class="btn btn-sm @(cat == category ? "btn-primary" : "btn-outline-primary")">
+                        @cat.ToUpper()
+                    </a>
+                }
+            </div>
         </div>
     </div>
 
     @if (!Model.Any())
     {
         <div class="alert alert-warning">
-            <h4 class="alert-heading">ℹ️ NewsAPI Key Required</h4>
-            <p>To view trending world news, you need to add your NewsAPI key to the configuration.</p>
+            <h4 class="alert-heading">ℹ️ GNews API Key Required</h4>
+            <p>To view trending world news, you need to add your GNews API key to the configuration.</p>
             <hr>
             <p class="mb-0">
                 <strong>Steps:</strong>
             </p>
             <ol>
-                <li>Get a free API key at <a href="https://newsapi.org/" target="_blank" class="alert-link">newsapi.org</a></li>
-                <li>Add to <code>appsettings.json</code>: <code>"NewsApi": { "ApiKey": "your-key-here" }</code></li>
-                <li>Or set environment variable: <code>NewsApi__ApiKey=your-key-here</code></li>
+                <li>Get a free API key at <a href="https://gnews.io/" target="_blank" class="alert-link">gnews.io</a></li>
+                <li>Add to <code>appsettings.json</code>: <code>"GNews": { "ApiKey": "your-key-here" }</code></li>
+                <li>Or set environment variable: <code>GNews__ApiKey=your-key-here</code></li>
                 <li>Restart the application</li>
             </ol>
-            <p class="mb-0 mt-2"><small>Free tier includes 100 requests per day (up to 50 articles per request)</small></p>
+            <p class="mb-0 mt-2"><small>Free tier includes 100 requests per day with access to news from 150+ countries in 60+ languages</small></p>
         </div>
     }
     else

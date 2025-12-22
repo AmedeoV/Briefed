@@ -22,7 +22,7 @@ public class ArticlesController : Controller
     private readonly ILogger<ArticlesController> _logger;
     private readonly BriefedDbContext _context;
     private readonly IMemoryCache _cache;
-    private readonly INewsApiService _newsApiService;
+    private readonly IGNewsService _gNewsService;
 
     public ArticlesController(
         IArticleService articleService,
@@ -31,7 +31,7 @@ public class ArticlesController : Controller
         ILogger<ArticlesController> logger,
         BriefedDbContext context,
         IMemoryCache cache,
-        INewsApiService newsApiService)
+        IGNewsService gNewsService)
     {
         _articleService = articleService;
         _summaryService = summaryService;
@@ -39,7 +39,7 @@ public class ArticlesController : Controller
         _logger = logger;
         _context = context;
         _cache = cache;
-        _newsApiService = newsApiService;
+        _gNewsService = gNewsService;
     }
 
     public async Task<IActionResult> Index(string filter = "all")
@@ -300,7 +300,7 @@ public class ArticlesController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Trending(string category = "general")
+    public async Task<IActionResult> Trending(string? category = null, string? country = null)
     {
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrEmpty(userId))
@@ -308,10 +308,26 @@ public class ArticlesController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        var trendingArticles = await _newsApiService.GetTrendingArticlesAsync(category, 50);
+        var trendingArticles = await _gNewsService.GetTrendingArticlesAsync(country, category, 10);
         
         ViewBag.Category = category;
-        ViewBag.Categories = new[] { "general", "business", "technology", "entertainment", "health", "science", "sports" };
+        ViewBag.Country = country;
+        ViewBag.Categories = new[] { "general", "world", "nation", "business", "technology", "entertainment", "sports", "science", "health" };
+        ViewBag.Countries = new Dictionary<string, string>
+        {
+            { "", "Worldwide" },
+            { "us", "United States" },
+            { "gb", "United Kingdom" },
+            { "au", "Australia" },
+            { "ca", "Canada" },
+            { "ie", "Ireland" },
+            { "in", "India" },
+            { "de", "Germany" },
+            { "fr", "France" },
+            { "jp", "Japan" },
+            { "cn", "China" },
+            { "br", "Brazil" }
+        };
         
         return View(trendingArticles);
     }

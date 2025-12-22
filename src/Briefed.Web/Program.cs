@@ -44,7 +44,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("Ollama");
 builder.Services.AddHttpClient("Groq");
-builder.Services.AddHttpClient<INewsApiService, NewsApiService>();
+builder.Services.AddHttpClient<IGNewsService, GNewsService>();
 builder.Services.AddHttpClient<IFactCheckService, FactCheckService>();
 builder.Services.AddScoped<IRssParserService, RssParserService>();
 builder.Services.AddScoped<IFeedService, FeedService>();
