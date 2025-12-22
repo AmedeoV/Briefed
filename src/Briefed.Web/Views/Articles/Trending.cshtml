@@ -72,7 +72,7 @@
                             <!-- Summary Section -->
                             <div class="summary-section mb-2" style="display: none;">
                                 <div class="alert alert-success mb-0">
-                                    <strong>🤖 AI Summary:</strong>
+                                    <strong>🤖 AI Summary <span class="badge bg-info summary-type-badge"></span></strong>
                                     <p class="summary-content mb-0 mt-2"></p>
                                 </div>
                             </div>
@@ -138,18 +138,105 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle summary type selection
+            // Store summaries by article URL and type
+            const summaryCache = {};
+            
+            // Handle summary type selection - directly trigger summarization
             document.querySelectorAll('.summary-type-select').forEach(option => {
-                option.addEventListener('click', function(e) {
+                option.addEventListener('click', async function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
+                    
                     const summaryType = this.dataset.type;
                     const btnGroup = this.closest('.btn-group');
                     const btn = btnGroup.querySelector('.summarise-btn');
-                    btn.dataset.summaryType = summaryType;
+                    const articleUrl = btn.dataset.url;
+                    const card = btn.closest('.card-body');
+                    const summarySection = card.querySelector('.summary-section');
+                    const summaryContent = card.querySelector('.summary-content');
+                    const dropdownToggle = btnGroup.querySelector('.dropdown-toggle');
+                    
+                    // Initialize cache for this article if needed
+                    if (!summaryCache[articleUrl]) {
+                        summaryCache[articleUrl] = {};
+                    }
+                    
+                    // Check if we already have this summary type cached
+                    if (summaryCache[articleUrl][summaryType]) {
+                        console.log(`Using cached ${summaryType} summary for ${articleUrl}`);
+                        // Just display the cached summary
+                        summaryContent.textContent = summaryCache[articleUrl][summaryType];
+                        summarySection.style.display = 'block';
+                        btn.innerHTML = '✓ Summary Generated';
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-outline-success');
+                        btn.disabled = false;
+                        
+                        // Update the badge to show which type is displayed
+                        const badge = summarySection.querySelector('.summary-type-badge');
+                        if (badge) {
+                            badge.textContent = summaryType === 'concise' ? '⚡ Concise' : '📝 Comprehensive';
+                        }
+                        
+                        // Close dropdown
+                        const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+                        if (dropdown) dropdown.hide();
+                        return;
+                    }
+                    
+                    console.log(`Generating ${summaryType} summary for ${articleUrl}`);
+                    
+                    // Close dropdown
+                    const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+                    if (dropdown) dropdown.hide();
+                    
+                    // Show loading state
+                    const originalText = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
+                    
+                    try {
+                        const response = await fetch('/Articles/SummariseTrendingArticle', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ url: articleUrl, summaryType: summaryType })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Cache the summary
+                            summaryCache[articleUrl][summaryType] = result.summary;
+                            
+                            // Display it
+                            summaryContent.textContent = result.summary;
+                            summarySection.style.display = 'block';
+                            btn.innerHTML = '✓ Summary Generated';
+                            btn.classList.remove('btn-success');
+                            btn.classList.add('btn-outline-success');
+                            btn.disabled = false;
+                            
+                            // Update the badge to show which type is displayed
+                            const badge = summarySection.querySelector('.summary-type-badge');
+                            if (badge) {
+                                badge.textContent = summaryType === 'concise' ? '⚡ Concise' : '📝 Comprehensive';
+                            }
+                        } else {
+                            alert('Error: ' + (result.error || 'Failed to generate summary'));
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }
+                    } catch (error) {
+                        alert('Error generating summary: ' + error.message);
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
                 });
             });
 
-            // Summarise buttons
+            // Summarise buttons - use comprehensive as default
             document.querySelectorAll('.summarise-btn').forEach(button => {
                 button.addEventListener('click', async function() {
                     const originalText = this.innerHTML;
@@ -158,6 +245,30 @@
                     const card = this.closest('.card-body');
                     const summarySection = card.querySelector('.summary-section');
                     const summaryContent = card.querySelector('.summary-content');
+                    
+                    // Initialize cache for this article if needed
+                    if (!summaryCache[articleUrl]) {
+                        summaryCache[articleUrl] = {};
+                    }
+                    
+                    // Check if we already have this summary type cached
+                    if (summaryCache[articleUrl][summaryType]) {
+                        console.log(`Using cached ${summaryType} summary for ${articleUrl}`);
+                        summaryContent.textContent = summaryCache[articleUrl][summaryType];
+                        summarySection.style.display = 'block';
+                        this.innerHTML = '✓ Summary Generated';
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-success');
+                        
+                        // Update the badge
+                        const badge = summarySection.querySelector('.summary-type-badge');
+                        if (badge) {
+                            badge.textContent = summaryType === 'concise' ? '⚡ Concise' : '📝 Comprehensive';
+                        }
+                        return;
+                    }
+                    
+                    console.log(`Generating ${summaryType} summary for ${articleUrl}`);
                     
                     this.disabled = true;
                     this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
@@ -174,11 +285,22 @@
                         const result = await response.json();
                         
                         if (result.success) {
+                            // Cache the summary
+                            summaryCache[articleUrl][summaryType] = result.summary;
+                            
+                            // Display it
                             summaryContent.textContent = result.summary;
                             summarySection.style.display = 'block';
                             this.innerHTML = '✓ Summary Generated';
                             this.classList.remove('btn-success');
                             this.classList.add('btn-outline-success');
+                            this.disabled = false;
+                            
+                            // Update the badge
+                            const badge = summarySection.querySelector('.summary-type-badge');
+                            if (badge) {
+                                badge.textContent = summaryType === 'concise' ? '⚡ Concise' : '📝 Comprehensive';
+                            }
                         } else {
                             alert('Error: ' + (result.error || 'Failed to generate summary'));
                             this.innerHTML = originalText;
