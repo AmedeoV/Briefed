@@ -150,6 +150,31 @@
         let menuTouchEndY = 0;
         const menuSwipeThreshold = 60; // Minimum distance for a swipe
 
+        // Create backdrop for mobile menu
+        const backdrop = document.createElement('div');
+        backdrop.className = 'mobile-menu-backdrop';
+        document.body.appendChild(backdrop);
+
+        // Close menu when clicking backdrop
+        backdrop.addEventListener('click', function() {
+            const navbarCollapse = document.querySelector('.navbar-collapse');
+            if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
+                bsCollapse.hide();
+            }
+        });
+
+        // Show/hide backdrop with menu
+        const navbarCollapse = document.querySelector('.navbar-collapse');
+        if (navbarCollapse) {
+            navbarCollapse.addEventListener('show.bs.collapse', function() {
+                backdrop.classList.add('show');
+            });
+            navbarCollapse.addEventListener('hide.bs.collapse', function() {
+                backdrop.classList.remove('show');
+            });
+        }
+
         // Use capture phase to intercept events before child handlers
         document.addEventListener('touchstart', function(e) {
             menuTouchStartX = e.changedTouches[0].screenX;
