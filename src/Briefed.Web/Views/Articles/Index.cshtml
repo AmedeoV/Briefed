@@ -102,7 +102,7 @@ else
                                     id="mark-read-btn-@feed.Id"
                                     title="Mark all as read" 
                                     @(unreadCount == 0 ? "disabled" : "")
-                                    onclick="markAllAsRead(@feed.Id, '@feed.Title')">
+                                    onclick="event.stopPropagation(); markAllAsRead(@feed.Id, '@feed.Title')">
                                 ✓
                             </button>
                         </div>
