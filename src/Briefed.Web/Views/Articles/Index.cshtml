@@ -126,7 +126,7 @@ else
                                             </a>
                                             @if (article.Summary != null)
                                             {
-                                                <span class="badge bg-success ms-2">✨ Summarized</span>
+                                                <span class="badge bg-success ms-2">✨ Summarised</span>
                                             }
                                         </h5>
                                         <p class="card-text text-muted small mb-2">
@@ -141,9 +141,9 @@ else
                                         }
                                         <div class="mt-2">
                                             <a href="@Url.Action("Read", new { id = article.Id })" class="btn btn-sm btn-primary">Read</a>
-                                            <form asp-action="Summarize" asp-route-id="@article.Id" method="post" class="d-inline summarize-form" data-article-id="@article.Id">
+                                            <form asp-action="Summarise" asp-route-id="@article.Id" method="post" class="d-inline summarise-form" data-article-id="@article.Id">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-success">✨ Summarize</button>
+                                                <button type="submit" class="btn btn-sm btn-outline-success">✨ Summarise</button>
                                             </form>
                                             <form asp-action="MarkAsRead" asp-route-id="@article.Id" method="post" class="d-inline mark-read-form" data-article-id="@article.Id" data-feed-id="@article.FeedId">
                                                 @Html.AntiForgeryToken()
@@ -283,7 +283,7 @@ else
             });
         })();
         
-        document.querySelectorAll('.summarize-form').forEach(form => {
+        document.querySelectorAll('.summarise-form').forEach(form => {
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -308,7 +308,7 @@ else
                     if (result.success) {
                         summaryContent.textContent = result.summary;
                         summaryDiv.style.display = 'block';
-                        button.innerHTML = '✓ Summarized';
+                        button.innerHTML = '✓ Summarised';
                         button.classList.remove('btn-outline-success');
                         button.classList.add('btn-success');
                     } else {

@@ -168,7 +168,7 @@ public class ArticlesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Summarize(int id)
+    public async Task<IActionResult> Summarise(int id, string summaryType = "comprehensive")
     {
         try
         {
@@ -198,7 +198,7 @@ public class ArticlesController : Controller
             }
 
             // Generate summary
-            var summary = await _summaryService.GenerateSummaryAsync(id, content);
+            var summary = await _summaryService.GenerateSummaryAsync(id, content, summaryType);
             return Json(new { success = true, summary = summary.Content });
         }
         catch (Exception ex)
@@ -300,7 +300,7 @@ public class ArticlesController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> SummarizeTrendingArticle([FromBody] TrendingArticleRequest request)
+    public async Task<IActionResult> SummariseTrendingArticle([FromBody] TrendingArticleRequest request)
     {
         try
         {
@@ -318,7 +318,8 @@ public class ArticlesController : Controller
             }
 
             // Generate summary using the summary service (without saving to database)
-            var summary = await _summaryService.GenerateSummaryAsync(0, content); // Pass 0 since there's no article ID
+            var summaryType = request.SummaryType ?? "comprehensive";
+            var summary = await _summaryService.GenerateSummaryAsync(0, content, summaryType); // Pass 0 since there's no article ID
             
             return Json(new { success = true, summary = summary.Content });
         }

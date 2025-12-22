@@ -87,9 +87,18 @@
                             
                             <div class="mt-auto">
                                 <div class="d-flex flex-wrap gap-2 mb-2">
-                                    <button class="btn btn-sm btn-success summarize-btn" data-url="@article.Url">
-                                        ✨ Summarize
-                                    </button>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-success summarise-btn" data-url="@article.Url" data-summary-type="comprehensive">
+                                            ✨ Summarise
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                                            <span class="visually-hidden">Toggle</span>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item summary-type-select" href="#" data-type="comprehensive">📝 Comprehensive</a></li>
+                                            <li><a class="dropdown-item summary-type-select" href="#" data-type="concise">⚡ Concise</a></li>
+                                        </ul>
+                                    </div>
                                     <button class="btn btn-sm btn-warning fact-check-btn" data-title="@article.Title" data-description="@article.Description">
                                         🔍 Fact Check
                                     </button>
@@ -129,11 +138,23 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Summarize buttons
-            document.querySelectorAll('.summarize-btn').forEach(button => {
+            // Handle summary type selection
+            document.querySelectorAll('.summary-type-select').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const summaryType = this.dataset.type;
+                    const btnGroup = this.closest('.btn-group');
+                    const btn = btnGroup.querySelector('.summarise-btn');
+                    btn.dataset.summaryType = summaryType;
+                });
+            });
+
+            // Summarise buttons
+            document.querySelectorAll('.summarise-btn').forEach(button => {
                 button.addEventListener('click', async function() {
                     const originalText = this.innerHTML;
                     const articleUrl = this.dataset.url;
+                    const summaryType = this.dataset.summaryType || 'comprehensive';
                     const card = this.closest('.card-body');
                     const summarySection = card.querySelector('.summary-section');
                     const summaryContent = card.querySelector('.summary-content');
@@ -142,12 +163,12 @@
                     this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
                     
                     try {
-                        const response = await fetch('/Articles/SummarizeTrendingArticle', {
+                        const response = await fetch('/Articles/SummariseTrendingArticle', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ url: articleUrl })
+                            body: JSON.stringify({ url: articleUrl, summaryType: summaryType })
                         });
                         
                         const result = await response.json();

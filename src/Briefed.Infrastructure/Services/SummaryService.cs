@@ -38,7 +38,7 @@ public class SummaryService : ISummaryService
             .FirstOrDefaultAsync(s => s.ArticleId == articleId);
     }
 
-    public async Task<Summary> GenerateSummaryAsync(int articleId, string articleContent)
+    public async Task<Summary> GenerateSummaryAsync(int articleId, string articleContent, string summaryType = "comprehensive")
     {
         var existing = await GetSummaryByArticleIdAsync(articleId);
         if (existing != null)
@@ -53,9 +53,9 @@ public class SummaryService : ISummaryService
         try
         {
             _logger.LogInformation("Attempting to generate summary for article {ArticleId} using Groq", articleId);
-            _logger.LogDebug("Content length: {Length} characters", articleContent.Length);
+            _logger.LogDebug("Content length: {Length} characters, Summary type: {SummaryType}", articleContent.Length, summaryType);
             
-            summaryText = await _groqService.GenerateSummaryAsync(articleContent);
+            summaryText = await _groqService.GenerateSummaryAsync(articleContent, summaryType);
             modelUsed = "Groq";
             _logger.LogInformation("Successfully generated summary using Groq");
         }
@@ -66,7 +66,7 @@ public class SummaryService : ISummaryService
             try
             {
                 _logger.LogInformation("Generating summary for article {ArticleId} using Ollama fallback", articleId);
-                summaryText = await _ollamaService.GenerateSummaryAsync(articleContent, _defaultModel);
+                summaryText = await _ollamaService.GenerateSummaryAsync(articleContent, _defaultModel, summaryType);
                 modelUsed = $"Ollama-{_defaultModel}";
                 _logger.LogInformation("Successfully generated summary using Ollama fallback");
             }

@@ -39,9 +39,18 @@
             {
                 <span class="badge bg-success">✓ Saved</span>
             }
-            <button type="button" class="btn btn-success" id="summarizeBtn" data-article-id="@Model.Article.Id">
-                ✨ Summarize with AI
-            </button>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-success" id="summariseBtn" data-article-id="@Model.Article.Id" data-summary-type="comprehensive">
+                    ✨ Summarise with AI
+                </button>
+                <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item summary-type-option" href="#" data-type="comprehensive">📝 Comprehensive</a></li>
+                    <li><a class="dropdown-item summary-type-option" href="#" data-type="concise">⚡ Concise</a></li>
+                </ul>
+            </div>
             <button type="button" class="btn btn-warning" id="factCheckBtn" data-article-id="@Model.Article.Id">
                 🔍 Fact Check
             </button>
@@ -107,10 +116,22 @@
 
 @section Scripts {
     <script>
-        document.getElementById('summarizeBtn').addEventListener('click', async function() {
+        // Handle summary type selection
+        document.querySelectorAll('.summary-type-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const summaryType = this.dataset.type;
+                const btn = document.getElementById('summariseBtn');
+                btn.dataset.summaryType = summaryType;
+                btn.innerHTML = summaryType === 'concise' ? '⚡ Summarise (Concise)' : '📝 Summarise (Comprehensive)';
+            });
+        });
+
+        document.getElementById('summariseBtn').addEventListener('click', async function() {
             const button = this;
             const originalText = button.innerHTML;
             const articleId = button.dataset.articleId;
+            const summaryType = button.dataset.summaryType || 'comprehensive';
             const summaryPanel = document.getElementById('summaryPanel');
             const summaryContent = document.getElementById('summaryContent');
             
@@ -121,7 +142,7 @@
                 const formData = new FormData();
                 formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
                 
-                const response = await fetch('@Url.Action("Summarize")?id=' + articleId, {
+                const response = await fetch('@Url.Action("Summarise")?id=' + articleId + '&summaryType=' + summaryType, {
                     method: 'POST',
                     body: formData
                 });
@@ -132,6 +153,7 @@
                     summaryContent.textContent = result.summary;
                     summaryPanel.style.display = 'block';
                     button.innerHTML = '✓ Summary Generated';
+                    button.dataset.summaryType = 'comprehensive';
                     button.classList.remove('btn-success');
                     button.classList.add('btn-outline-success');
                 } else {

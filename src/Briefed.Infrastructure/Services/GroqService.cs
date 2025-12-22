@@ -38,7 +38,7 @@ public class GroqService : IGroqService
         _maxContentLength = 8000;
     }
 
-    public async Task<string> GenerateSummaryAsync(string text)
+    public async Task<string> GenerateSummaryAsync(string text, string summaryType = "comprehensive")
     {
         try
         {
@@ -53,6 +53,12 @@ public class GroqService : IGroqService
                 contentToSummarize = text.Substring(0, _maxContentLength);
             }
             
+            var systemPrompt = summaryType == "concise" 
+                ? "You are a news article summarizer. Provide a brief, concise summary highlighting only the main point."
+                : "You are a news article summarizer. Provide a comprehensive yet concise summary of the article, capturing all key points.";
+            
+            var maxTokens = summaryType == "concise" ? _maxTokens / 2 : _maxTokens;
+            
             var request = new
             {
                 model = _model,
@@ -61,7 +67,7 @@ public class GroqService : IGroqService
                     new
                     {
                         role = "system",
-                        content = "You are a news article summarizer. Provide a comprehensive yet concise summary of the article, capturing all key points."
+                        content = systemPrompt
                     },
                     new
                     {
@@ -70,7 +76,7 @@ public class GroqService : IGroqService
                     }
                 },
                 temperature = 0.3,
-                max_tokens = _maxTokens
+                max_tokens = maxTokens
             };
 
             _logger.LogDebug("Sending request to Groq API");

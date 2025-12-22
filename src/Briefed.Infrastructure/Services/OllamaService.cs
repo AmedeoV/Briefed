@@ -31,7 +31,7 @@ public class OllamaService : IOllamaService
         _maxTokens = int.TryParse(maxTokensValue, out var mt) ? mt : 500;
     }
 
-    public async Task<string> GenerateSummaryAsync(string text, string model = "llama3.2:3b")
+    public async Task<string> GenerateSummaryAsync(string text, string model = "llama3.2:3b", string summaryType = "comprehensive")
     {
         try
         {
@@ -46,7 +46,13 @@ public class OllamaService : IOllamaService
                 contentToSummarize = text.Substring(0, _maxContentLength) + "\n\n[Content truncated...]";
             }
             
-            var prompt = $@"Provide a comprehensive yet concise summary of this article, capturing all key points:
+            var promptPrefix = summaryType == "concise"
+                ? "Provide a brief, concise summary highlighting only the main point of this article:"
+                : "Provide a comprehensive yet concise summary of this article, capturing all key points:";
+            
+            var maxTokens = summaryType == "concise" ? _maxTokens / 2 : _maxTokens;
+            
+            var prompt = $@"{promptPrefix}
 
 {contentToSummarize}";
 
@@ -58,7 +64,7 @@ public class OllamaService : IOllamaService
                 options = new
                 {
                     temperature = 0.3,
-                    num_predict = _maxTokens
+                    num_predict = maxTokens
                 }
             };
 
