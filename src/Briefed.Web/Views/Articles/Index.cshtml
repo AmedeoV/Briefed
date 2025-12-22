@@ -454,6 +454,9 @@ else
                 const factCheckDiv = document.getElementById('fact-check-' + articleId);
                 const factCheckContent = factCheckDiv.querySelector('.fact-check-content');
                 
+                // Combine title and description as article text
+                const articleText = `${title}\n\n${description || ''}`;
+                
                 this.disabled = true;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Checking...';
                 
@@ -462,24 +465,38 @@ else
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                         },
                         body: JSON.stringify({
-                            title: title,
-                            description: description
+                            articleText: articleText
                         })
                     });
                     
-                    const result = await response.json();
+                    const results = await response.json();
                     
-                    if (result.success && result.factChecks && result.factChecks.length > 0) {
+                    if (results && results.length > 0) {
                         let html = '<div class="list-group list-group-flush">';
-                        result.factChecks.forEach(fc => {
+                        results.forEach((result, index) => {
+                            const ratingClass = result.textualRating?.toLowerCase().includes('false') ? 'danger' : 
+                                              result.textualRating?.toLowerCase().includes('true') ? 'success' : 'warning';
+                            
+                            const confidenceClass = result.confidence === 'High' ? 'success' : 
+                                                  result.confidence === 'Medium' ? 'warning' : 'secondary';
+                            
                             html += `
                                 <div class="list-group-item px-0">
-                                    <h6 class="mb-1">${fc.title}</h6>
-                                    <p class="mb-1 small">${fc.text}</p>
-                                    <small><a href="${fc.url}" target="_blank" class="text-decoration-none">Read more →</a></small>
+                                    <h6 class="mb-2"><strong>Claim ${index + 1}:</strong></h6>
+                                    <p class="mb-2 small">${result.claim || 'N/A'}</p>
+                                    
+                                    <div class="mb-2">
+                                        ${result.textualRating ? `<span class="badge bg-${ratingClass}">${result.textualRating}</span>` : ''}
+                                        ${result.confidence ? `<span class="badge bg-${confidenceClass} ms-1">${result.confidence} Confidence</span>` : ''}
+                                        ${result.source ? `<span class="badge bg-info ms-1">${result.source}</span>` : ''}
+                                    </div>
+                                    
+                                    ${result.reasoning ? `<p class="mb-2 small"><strong>Analysis:</strong> ${result.reasoning}</p>` : ''}
+                                    ${result.publisher ? `<p class="mb-1 small"><strong>Source:</strong> ${result.publisher}</p>` : ''}
+                                    ${result.claimReview && !result.reasoning ? `<p class="mb-1 small text-muted">${result.claimReview}</p>` : ''}
+                                    ${result.url ? `<a href="${result.url}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Read Full Review</a>` : ''}
                                 </div>
                             `;
                         });
