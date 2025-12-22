@@ -317,18 +317,22 @@ else
                     
                     // Check if we already have this summary type cached
                     if (summaryCache[articleId][summaryType]) {
+                        console.log(`Using cached ${summaryType} summary for article ${articleId}`);
                         // Just display the cached summary
                         summaryContent.textContent = summaryCache[articleId][summaryType];
                         summaryDiv.style.display = 'block';
                         btn.innerHTML = '✓ Summarised';
                         btn.classList.remove('btn-outline-success');
                         btn.classList.add('btn-success');
+                        btn.disabled = false;
                         
                         // Close dropdown
                         const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
                         if (dropdown) dropdown.hide();
                         return;
                     }
+                    
+                    console.log(`Generating ${summaryType} summary for article ${articleId}`);
                     
                     // Close dropdown
                     const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
