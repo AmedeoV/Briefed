@@ -303,11 +303,20 @@ else
                     const btn = document.querySelector(`.summarise-article-btn[data-article-id="${articleId}"]`);
                     const summaryDiv = document.getElementById('summary-' + articleId);
                     const summaryContent = summaryDiv.querySelector('.summary-content');
+                    const dropdownToggle = this.closest('.dropdown-menu').previousElementSibling;
                     
                     if (!btn || !summaryDiv) return;
                     
+                    // Check if already re-summarized once
+                    if (btn.dataset.resummaryUsed === 'true') {
+                        alert('Summary already generated. Refresh the page to generate a new one.');
+                        return;
+                    }
+                    
+                    // Check if this is a re-summarization (already has summary)
+                    const isResummary = summaryDiv.style.display !== 'none' && summaryContent.textContent.trim() !== '';
+                    
                     // Close dropdown
-                    const dropdownToggle = this.closest('.dropdown-menu').previousElementSibling;
                     const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
                     if (dropdown) dropdown.hide();
                     
@@ -332,6 +341,13 @@ else
                             btn.innerHTML = '✓ Summarised';
                             btn.classList.remove('btn-outline-success');
                             btn.classList.add('btn-success');
+                            
+                            // If this was a re-summarization, mark it as used
+                            if (isResummary) {
+                                btn.dataset.resummaryUsed = 'true';
+                                // Disable the dropdown to prevent further changes
+                                dropdownToggle.disabled = true;
+                            }
                         } else {
                             alert('Error: ' + (result.error || 'Failed to generate summary'));
                             btn.innerHTML = originalText;
