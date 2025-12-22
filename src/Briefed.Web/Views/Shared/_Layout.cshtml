@@ -142,6 +142,48 @@
         function updateThemeIcon(theme) {
             themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
         }
+
+        // Swipe-right gesture to show menu on mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        const swipeThreshold = 80; // Minimum distance for a swipe
+        const edgeThreshold = 30; // Detect swipes starting near left edge
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            
+            // Check if swipe is primarily horizontal
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Swipe right from left edge to open menu
+                if (deltaX > swipeThreshold && touchStartX < edgeThreshold) {
+                    const navbarCollapse = document.querySelector('.navbar-collapse');
+                    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
+                    bsCollapse.show();
+                }
+                // Optional: Swipe left to close menu if it's open
+                else if (deltaX < -swipeThreshold) {
+                    const navbarCollapse = document.querySelector('.navbar-collapse');
+                    if (navbarCollapse.classList.contains('show')) {
+                        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
+                        bsCollapse.hide();
+                    }
+                }
+            }
+        }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
