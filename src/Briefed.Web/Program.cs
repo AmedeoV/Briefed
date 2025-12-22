@@ -2,6 +2,7 @@ using Briefed.Core.Entities;
 using Briefed.Core.Interfaces;
 using Briefed.Infrastructure.Data;
 using Briefed.Infrastructure.Services;
+using Briefed.Web;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.DataProtection;
@@ -74,6 +75,23 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<BriefedDbContext>();
     dbContext.Database.Migrate();
+    
+    // Seed admin role and user
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    
+    // Create Admin role if it doesn't exist
+    if (!await roleManager.RoleExistsAsync("Admin"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("Admin"));
+    }
+    
+    // Assign Admin role to the first user in the database
+    var firstUser = userManager.Users.FirstOrDefault();
+    if (firstUser != null && !await userManager.IsInRoleAsync(firstUser, "Admin"))
+    {
+        await userManager.AddToRoleAsync(firstUser, "Admin");
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -90,11 +108,11 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Add Hangfire Dashboard (only in Development for security)
-if (app.Environment.IsDevelopment())
+// Add Hangfire Dashboard with admin authorization
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    app.UseHangfireDashboard("/hangfire");
-}
+    Authorization = new[] { new HangfireAuthorizationFilter() }
+});
 
 app.MapStaticAssets();
 
