@@ -50,7 +50,7 @@ public class OllamaService : IOllamaService
                 ? "Provide a brief, concise summary highlighting only the main point of this article:"
                 : "Provide a comprehensive yet concise summary of this article, capturing all key points:";
             
-            var maxTokens = summaryType == "concise" ? _maxTokens / 2 : _maxTokens;
+            var maxTokens = summaryType == "concise" ? (_maxTokens * 3) / 4 : _maxTokens;
             
             var prompt = $@"{promptPrefix}
 
