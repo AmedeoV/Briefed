@@ -39,7 +39,11 @@ else
                         <div class="d-flex align-items-start mb-2">
                             @if (!string.IsNullOrEmpty(feed.FaviconUrl))
                             {
-                                <img src="@feed.FaviconUrl" alt="@feed.Title" class="me-2 mt-1" style="width: 16px; height: 16px;" onerror="this.style.display='none'">
+                                <img src="@feed.FaviconUrl" alt="@feed.Title" class="me-2 mt-1" style="width: 16px; height: 16px;" onerror="this.src='/favicon.ico'">
+                            }
+                            else
+                            {
+                                <img src="/favicon.ico" alt="@feed.Title" class="me-2 mt-1" style="width: 16px; height: 16px;">
                             }
                             <div class="flex-grow-1">
                                 <h6 class="mb-1">

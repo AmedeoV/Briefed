@@ -69,11 +69,11 @@ else
                             <i class="collapse-icon me-2"></i>
                             @if (!string.IsNullOrEmpty(feed.FaviconUrl))
                             {
-                                <img src="@feed.FaviconUrl" alt="@feed.Title icon" class="me-2" style="width: 20px; height: 20px;" onerror="this.style.display='none'" />
+                                <img src="@feed.FaviconUrl" alt="@feed.Title icon" class="me-2" style="width: 20px; height: 20px;" onerror="this.src='/favicon.ico'" />
                             }
                             else
                             {
-                                <span class="me-2">📰</span>
+                                <img src="/favicon.ico" alt="@feed.Title icon" class="me-2" style="width: 20px; height: 20px;" />
                             }
                             <h5 class="mb-0">@feed.Title</h5>
                         </div>
