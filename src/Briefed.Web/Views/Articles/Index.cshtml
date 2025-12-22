@@ -63,7 +63,6 @@ else
                 <div class="card-header swipeable-feed-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#@feedId" aria-expanded="false" data-feed-id="@feed.Id" data-feed-title="@feed.Title" data-unread-count="@unreadCount">
                     <div class="swipe-action-indicator">
                         <span class="swipe-icon">✓</span>
-                        <span class="swipe-text">Mark all as read</span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
@@ -569,12 +568,12 @@ else
             right: 0;
             top: 0;
             height: 100%;
-            width: 120px;
-            background: linear-gradient(to left, #28a745, rgba(40, 167, 69, 0.8));
+            width: 100%;
+            background: #28a745;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-end;
+            padding-right: 30px;
             color: white;
             font-weight: bold;
             opacity: 0;
@@ -584,13 +583,7 @@ else
         }
         
         .swipe-action-indicator .swipe-icon {
-            font-size: 1.5em;
-            margin-bottom: 4px;
-        }
-        
-        .swipe-action-indicator .swipe-text {
-            font-size: 0.75em;
-            text-align: center;
+            font-size: 2em;
         }
         
         .swipeable-feed-header > .d-flex {
