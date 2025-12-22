@@ -321,6 +321,7 @@ public class ArticlesController : Controller
             { "au", "Australia" },
             { "ca", "Canada" },
             { "ie", "Ireland" },
+            { "it", "Italy" },
             { "in", "India" },
             { "de", "Germany" },
             { "fr", "France" },
