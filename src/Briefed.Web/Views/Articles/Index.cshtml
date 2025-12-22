@@ -215,11 +215,12 @@ else
                         // Visual feedback for left swipe
                         if (deltaX > 0) {
                             const swipeProgress = Math.min(deltaX / minSwipeDistance, 1);
-                            this.style.transform = `translateX(-${deltaX * 0.3}px)`;
+                            this.style.transform = `translateX(-${deltaX * 0.5}px)`;
                             this.style.transition = 'none';
                             
                             const indicator = this.querySelector('.swipe-action-indicator');
                             indicator.style.opacity = swipeProgress;
+                            indicator.style.right = `${-100 + (deltaX * 0.5)}px`;
                         }
                     }
                 }, { passive: true });
@@ -239,6 +240,8 @@ else
                     
                     const indicator = this.querySelector('.swipe-action-indicator');
                     indicator.style.opacity = '0';
+                    indicator.style.right = '-100px';
+                    indicator.style.transition = 'opacity 0.3s ease, right 0.3s ease';
                     
                     // Check if it's a valid left swipe
                     if (deltaX > minSwipeDistance && deltaY < maxVerticalDeviation) {
@@ -559,37 +562,41 @@ else
         /* Swipe to mark as read styles */
         .swipeable-feed-header {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             touch-action: pan-y;
         }
         
         .swipe-action-indicator {
             position: absolute;
-            right: 0;
+            right: -100px;
             top: 0;
             height: 100%;
-            width: 100%;
+            width: 100px;
             background: #28a745;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            padding-right: 30px;
+            justify-content: center;
             color: white;
             font-weight: bold;
             opacity: 0;
             transition: opacity 0.2s ease;
             pointer-events: none;
             z-index: 0;
+            border-radius: 0 4px 4px 0;
         }
         
         .swipe-action-indicator .swipe-icon {
-            font-size: 2em;
+            font-size: 2.5em;
         }
         
         .swipeable-feed-header > .d-flex {
             position: relative;
             z-index: 1;
-            background: inherit;
+            background: var(--bs-card-cap-bg, #f8f9fa);
+        }
+        
+        [data-theme="dark"] .swipeable-feed-header > .d-flex {
+            background: var(--bs-dark, #212529);
         }
     </style>
 }
