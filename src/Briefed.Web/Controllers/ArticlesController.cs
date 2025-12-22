@@ -299,6 +299,36 @@ public class ArticlesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost]
+    public async Task<IActionResult> SummarizeTrendingArticle([FromBody] TrendingArticleRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.Url))
+            {
+                return Json(new { success = false, error = "Article URL is required." });
+            }
+
+            // Fetch article content from URL
+            var content = await _articleService.GetArticleContentAsync(request.Url);
+            
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return Json(new { success = false, error = "Could not fetch article content." });
+            }
+
+            // Generate summary using the summary service (without saving to database)
+            var summary = await _summaryService.GenerateSummaryAsync(0, content); // Pass 0 since there's no article ID
+            
+            return Json(new { success = true, summary = summary.Content });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate summary for trending article {Url}", request.Url);
+            return Json(new { success = false, error = "Failed to generate summary. Please ensure Ollama is running." });
+        }
+    }
+
     [HttpGet]
     public async Task<IActionResult> Trending(string? category = null, string? country = null)
     {

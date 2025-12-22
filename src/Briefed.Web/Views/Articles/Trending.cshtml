@@ -68,7 +68,32 @@
                                 </a>
                             </h5>
                             <p class="card-text text-muted flex-grow-1">@article.Description</p>
+                            
+                            <!-- Summary Section -->
+                            <div class="summary-section mb-2" style="display: none;">
+                                <div class="alert alert-success mb-0">
+                                    <strong>🤖 AI Summary:</strong>
+                                    <p class="summary-content mb-0 mt-2"></p>
+                                </div>
+                            </div>
+                            
+                            <!-- Fact Check Section -->
+                            <div class="fact-check-section mb-2" style="display: none;">
+                                <div class="alert alert-warning mb-0">
+                                    <strong>🔍 Fact Check:</strong>
+                                    <div class="fact-check-content mt-2"></div>
+                                </div>
+                            </div>
+                            
                             <div class="mt-auto">
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <button class="btn btn-sm btn-success summarize-btn" data-url="@article.Url">
+                                        ✨ Summarize
+                                    </button>
+                                    <button class="btn btn-sm btn-warning fact-check-btn" data-title="@article.Title" data-description="@article.Description">
+                                        🔍 Fact Check
+                                    </button>
+                                </div>
                                 <a href="@article.Url" target="_blank" class="btn btn-sm btn-outline-primary" rel="noopener noreferrer">
                                     Read Full Article →
                                 </a>
@@ -100,3 +125,115 @@
         color: #0d6efd !important;
     }
 </style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Summarize buttons
+            document.querySelectorAll('.summarize-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const originalText = this.innerHTML;
+                    const articleUrl = this.dataset.url;
+                    const card = this.closest('.card-body');
+                    const summarySection = card.querySelector('.summary-section');
+                    const summaryContent = card.querySelector('.summary-content');
+                    
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
+                    
+                    try {
+                        const response = await fetch('/Articles/SummarizeTrendingArticle', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ url: articleUrl })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            summaryContent.textContent = result.summary;
+                            summarySection.style.display = 'block';
+                            this.innerHTML = '✓ Summary Generated';
+                            this.classList.remove('btn-success');
+                            this.classList.add('btn-outline-success');
+                        } else {
+                            alert('Error: ' + (result.error || 'Failed to generate summary'));
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        }
+                    } catch (error) {
+                        alert('Error generating summary: ' + error.message);
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }
+                });
+            });
+
+            // Fact check buttons
+            document.querySelectorAll('.fact-check-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const originalText = this.innerHTML;
+                    const title = this.dataset.title;
+                    const description = this.dataset.description;
+                    const card = this.closest('.card-body');
+                    const factCheckSection = card.querySelector('.fact-check-section');
+                    const factCheckContent = card.querySelector('.fact-check-content');
+                    
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Checking...';
+                    
+                    try {
+                        const response = await fetch('/FactCheck/CheckArticle', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ articleText: title + ' ' + description })
+                        });
+                        
+                        const results = await response.json();
+                        
+                        if (results && results.length > 0) {
+                            let html = '<div class="small">';
+                            results.forEach((result, index) => {
+                                const ratingClass = result.textualRating?.toLowerCase().includes('false') ? 'danger' : 
+                                                  result.textualRating?.toLowerCase().includes('true') ? 'success' : 'warning';
+                                
+                                html += `
+                                    <div class="mb-2 pb-2 ${index < results.length - 1 ? 'border-bottom' : ''}">
+                                        <div class="mb-1">
+                                            ${result.textualRating ? `<span class="badge bg-${ratingClass}">${result.textualRating}</span>` : ''}
+                                            ${result.source ? `<span class="badge bg-info ms-1">${result.source}</span>` : ''}
+                                        </div>
+                                        <p class="mb-1"><strong>${result.claim || 'Claim ' + (index + 1)}</strong></p>
+                                        ${result.reasoning ? `<p class="mb-1">${result.reasoning}</p>` : ''}
+                                        ${result.url ? `<a href="${result.url}" target="_blank" class="btn btn-sm btn-outline-primary">Read More</a>` : ''}
+                                    </div>
+                                `;
+                            });
+                            html += '</div>';
+                            factCheckContent.innerHTML = html;
+                            factCheckSection.style.display = 'block';
+                            this.innerHTML = '✓ Fact Checked';
+                            this.classList.remove('btn-warning');
+                            this.classList.add('btn-outline-warning');
+                        } else {
+                            factCheckContent.innerHTML = '<p class="text-muted mb-0 small">No fact-checks found for this article.</p>';
+                            factCheckSection.style.display = 'block';
+                            this.innerHTML = '✓ No Matches';
+                            this.classList.remove('btn-warning');
+                            this.classList.add('btn-outline-warning');
+                        }
+                    } catch (error) {
+                        alert('Error fact checking: ' + error.message);
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }
+                });
+            });
+        });
+    </script>
+}
+
