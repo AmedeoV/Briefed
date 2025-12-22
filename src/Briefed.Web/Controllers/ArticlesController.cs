@@ -312,11 +312,16 @@ public class ArticlesController : Controller
     {
         // Clear cache when refreshing feeds
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        
+        _logger.LogInformation("RefreshFeeds called by user {UserId} - clearing all caches", userId);
+        
         _cache.Remove($"articles_{userId}_all");
         _cache.Remove($"articles_{userId}_unread");
         _cache.Remove($"articles_{userId}_read");
         _cache.Remove($"unread_counts_{userId}");
         _cache.Remove($"read_article_ids_{userId}");
+        
+        _logger.LogInformation("All caches cleared for user {UserId}", userId);
         
         BackgroundJob.Enqueue<FeedUpdateService>(service => service.UpdateAllFeedsAsync());
         BackgroundJob.Enqueue<FeedUpdateService>(service => service.UpdateFeedFaviconsAsync());
