@@ -287,6 +287,7 @@ public class ArticlesController : Controller
             _cache.Remove($"articles_{userId}_unread");
             _cache.Remove($"articles_{userId}_read");
             _cache.Remove($"unread_counts_{userId}");
+            _cache.Remove($"read_article_ids_{userId}");
             
             return Json(new { success = true });
         }
@@ -307,6 +308,7 @@ public class ArticlesController : Controller
         _cache.Remove($"articles_{userId}_unread");
         _cache.Remove($"articles_{userId}_read");
         _cache.Remove($"unread_counts_{userId}");
+        _cache.Remove($"read_article_ids_{userId}");
         
         BackgroundJob.Enqueue<FeedUpdateService>(service => service.UpdateAllFeedsAsync());
         BackgroundJob.Enqueue<FeedUpdateService>(service => service.UpdateFeedFaviconsAsync());
