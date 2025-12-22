@@ -12,6 +12,7 @@ public class OllamaService : IOllamaService
     private readonly ILogger<OllamaService> _logger;
     private readonly string _baseUrl;
     private readonly int _maxContentLength;
+    private readonly int _maxTokens;
 
     public OllamaService(IConfiguration configuration, ILogger<OllamaService> logger)
     {
@@ -25,6 +26,9 @@ public class OllamaService : IOllamaService
         
         var maxLengthValue = configuration["Ollama:MaxContentLength"];
         _maxContentLength = int.TryParse(maxLengthValue, out var maxLen) ? maxLen : 15000;
+        
+        var maxTokensValue = configuration["Ollama:MaxTokens"];
+        _maxTokens = int.TryParse(maxTokensValue, out var mt) ? mt : 500;
     }
 
     public async Task<string> GenerateSummaryAsync(string text, string model = "llama3.2:3b")
@@ -54,7 +58,7 @@ public class OllamaService : IOllamaService
                 options = new
                 {
                     temperature = 0.3,
-                    num_predict = 300
+                    num_predict = _maxTokens
                 }
             };
 

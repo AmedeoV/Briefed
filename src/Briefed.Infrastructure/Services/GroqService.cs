@@ -13,6 +13,7 @@ public class GroqService : IGroqService
     private readonly string _apiKey;
     private readonly string _model;
     private readonly int _maxContentLength;
+    private readonly int _maxTokens;
 
     public GroqService(IConfiguration configuration, ILogger<GroqService> logger)
     {
@@ -22,6 +23,9 @@ public class GroqService : IGroqService
         
         var timeoutValue = configuration["Groq:TimeoutSeconds"];
         var timeout = int.TryParse(timeoutValue, out var t) ? t : 30;
+        
+        var maxTokensValue = configuration["Groq:MaxTokens"];
+        _maxTokens = int.TryParse(maxTokensValue, out var mt) ? mt : 500;
         
         _httpClient = new HttpClient
         {
@@ -66,7 +70,7 @@ public class GroqService : IGroqService
                     }
                 },
                 temperature = 0.3,
-                max_tokens = 300
+                max_tokens = _maxTokens
             };
 
             _logger.LogDebug("Sending request to Groq API");
