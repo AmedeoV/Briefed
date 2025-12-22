@@ -568,13 +568,17 @@ else
         }
         .read-article {
             background: linear-gradient(to right, rgba(200, 200, 200, 0.1), rgba(200, 200, 200, 0.05));
-            opacity: 0.85;
         }
         [data-theme="dark"] .read-article {
             background: linear-gradient(to right, rgba(100, 100, 100, 0.15), rgba(100, 100, 100, 0.05));
         }
         .read-article .card-body {
             color: var(--text-secondary);
+        }
+        
+        /* Ensure dropdown menus in read articles are fully opaque */
+        .read-article .dropdown-menu {
+            opacity: 1 !important;
         }
         
         /* Swipe to mark as read styles */
