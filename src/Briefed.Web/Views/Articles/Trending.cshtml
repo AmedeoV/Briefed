@@ -9,8 +9,27 @@
 
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-        <h2>🔥 Trending World News</h2>
-        <div class="d-flex gap-2 flex-wrap">
+        <div>
+            <h2>🔥 Trending World News</h2>
+            @if (ViewBag.LastFetch != null && ViewBag.LastFetch != DateTime.MinValue)
+            {
+                var lastFetch = (DateTime)ViewBag.LastFetch;
+                var timeAgo = DateTime.UtcNow - lastFetch;
+                var timeAgoText = timeAgo.TotalHours >= 1 
+                    ? $"{(int)timeAgo.TotalHours}h ago" 
+                    : $"{(int)timeAgo.TotalMinutes}m ago";
+                <small class="text-muted">Last updated: @timeAgoText | Cached for 24h to minimize API calls</small>
+            }
+        </div>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            @if (ViewBag.IsAdmin == true)
+            {
+                <a href="@Url.Action("Trending", new { category = category, country = country, refresh = true })" 
+                   class="btn btn-sm btn-warning" 
+                   onclick="return confirm('Force refresh will use 1 API call (100/day limit). Continue?')">
+                    🔄 Admin: Force Refresh
+                </a>
+            }
             <div class="btn-group" role="group" aria-label="Country filter">
                 @foreach (var kvp in countries)
                 {

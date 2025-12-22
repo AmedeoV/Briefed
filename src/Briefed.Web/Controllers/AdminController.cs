@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Briefed.Web.Controllers;
 
@@ -18,19 +19,22 @@ public class AdminController : Controller
     private readonly IFeedService _feedService;
     private readonly ILogger<AdminController> _logger;
     private readonly IRecurringJobManager _recurringJobManager;
+    private readonly IMemoryCache _cache;
 
     public AdminController(
         BriefedDbContext context,
         UserManager<User> userManager,
         IFeedService feedService,
         ILogger<AdminController> logger,
-        IRecurringJobManager recurringJobManager)
+        IRecurringJobManager recurringJobManager,
+        IMemoryCache cache)
     {
         _context = context;
         _userManager = userManager;
         _feedService = feedService;
         _logger = logger;
         _recurringJobManager = recurringJobManager;
+        _cache = cache;
     }
 
     public async Task<IActionResult> Index()
@@ -66,6 +70,53 @@ public class AdminController : Controller
                 })
                 .ToListAsync()
         };
+        
+        // Get cached trending articles info
+        var cachedTrending = new Dictionary<string, CachedTrendingInfo>();
+        var countries = new[] { "", "us", "gb", "au", "ca", "ie", "it", "in", "de", "fr", "jp", "cn", "br" };
+        var categories = new[] { "general", "world", "nation", "business", "technology", "entertainment", "sports", "science", "health" };
+        
+        foreach (var country in countries)
+        {
+            foreach (var category in categories)
+            {
+                var cacheKey = $"trending_{country}_" + (category == "general" ? "general" : category);
+                var lastFetchKey = $"trending_last_fetch_{country}_{category}";
+                
+                if (_cache.TryGetValue(lastFetchKey, out DateTime lastFetch))
+                {
+                    var expiry = lastFetch.AddHours(24) - DateTime.UtcNow;
+                    var countryName = country switch
+                    {
+                        "" => "Worldwide",
+                        "us" => "US",
+                        "gb" => "GB",
+                        "au" => "AU",
+                        "ca" => "CA",
+                        "ie" => "IE",
+                        "it" => "IT",
+                        "in" => "IN",
+                        "de" => "DE",
+                        "fr" => "FR",
+                        "jp" => "JP",
+                        "cn" => "CN",
+                        "br" => "BR",
+                        _ => country
+                    };
+                    
+                    cachedTrending[$"{countryName}/{category}"] = new CachedTrendingInfo
+                    {
+                        Country = countryName,
+                        Category = category,
+                        LastFetch = lastFetch,
+                        TimeUntilExpiry = expiry,
+                        ArticleCount = 10
+                    };
+                }
+            }
+        }
+        
+        stats.CachedTrendingArticles = cachedTrending.OrderByDescending(x => x.Value.LastFetch).ToDictionary(x => x.Key, x => x.Value);
 
         return View(stats);
     }
@@ -181,6 +232,7 @@ public class AdminDashboardViewModel
     public int TotalSummaries { get; set; }
     public List<UserInfo> RecentUsers { get; set; } = new();
     public List<FeedInfo> TopFeeds { get; set; } = new();
+    public Dictionary<string, CachedTrendingInfo> CachedTrendingArticles { get; set; } = new();
 }
 
 public class UserInfo
@@ -197,5 +249,14 @@ public class FeedInfo
     public string Title { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
     public int SubscriberCount { get; set; }
+    public int ArticleCount { get; set; }
+}
+
+public class CachedTrendingInfo
+{
+    public string Country { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public DateTime LastFetch { get; set; }
+    public TimeSpan TimeUntilExpiry { get; set; }
     public int ArticleCount { get; set; }
 }

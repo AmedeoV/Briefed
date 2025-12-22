@@ -350,7 +350,7 @@ public class ArticlesController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Trending(string? category = null, string? country = null)
+    public async Task<IActionResult> Trending(string? category = null, string? country = null, bool refresh = false)
     {
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrEmpty(userId))
@@ -358,7 +358,48 @@ public class ArticlesController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        var trendingArticles = await _gNewsService.GetTrendingArticlesAsync(country, category, 10);
+        // Create cache key based on country and category
+        var cacheKey = $"trending_{country ?? "worldwide"}_{category ?? "general"}";
+        var lastFetchKey = $"trending_last_fetch_{country ?? "worldwide"}_{category ?? "general"}";
+        
+        List<TrendingArticle> trendingArticles;
+        
+        // Check if admin wants to force refresh
+        var user = await _userManager.GetUserAsync(User);
+        var isAdmin = user != null && await _userManager.IsInRoleAsync(user, "Admin");
+        
+        if (refresh && !isAdmin)
+        {
+            // Only admins can force refresh
+            return RedirectToAction("Trending", new { category, country });
+        }
+        
+        // Try to get from cache (24 hours)
+        if (!refresh && _cache.TryGetValue(cacheKey, out trendingArticles!))
+        {
+            _logger.LogInformation("Retrieved {Count} trending articles from cache for {Country}/{Category}", 
+                trendingArticles.Count, country ?? "worldwide", category ?? "general");
+        }
+        else
+        {
+            trendingArticles = await _gNewsService.GetTrendingArticlesAsync(country, category, 10);
+            
+            // Cache for 24 hours to minimize API calls
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromHours(24))
+                .SetSlidingExpiration(TimeSpan.FromHours(12));
+            
+            _cache.Set(cacheKey, trendingArticles, cacheOptions);
+            _cache.Set(lastFetchKey, DateTime.UtcNow, cacheOptions);
+            
+            _logger.LogInformation("Fetched and cached {Count} trending articles for {Country}/{Category} (24h cache)", 
+                trendingArticles.Count, country ?? "worldwide", category ?? "general");
+        }
+        
+        // Get last fetch time for display
+        _cache.TryGetValue(lastFetchKey, out DateTime lastFetch);
+        ViewBag.LastFetch = lastFetch;
+        ViewBag.IsAdmin = isAdmin;
         
         ViewBag.Category = category;
         ViewBag.Country = country;
@@ -379,6 +420,8 @@ public class ArticlesController : Controller
             { "cn", "China" },
             { "br", "Brazil" }
         };
+        
+        ViewBag.CanRefresh = isAdmin;
         
         return View(trendingArticles);
     }

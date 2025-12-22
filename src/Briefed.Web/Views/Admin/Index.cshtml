@@ -94,6 +94,61 @@
         </div>
     </div>
 
+    <!-- GNews API Usage -->
+    @if (Model.CachedTrendingArticles.Any())
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">🌍 GNews API Usage (100 calls/day limit)</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>📊 Cache Strategy:</strong> Trending articles are cached for 24 hours to minimize API usage. 
+                    Each country/category combination uses 1 API call. Currently <strong>@Model.CachedTrendingArticles.Count cached combinations</strong>.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Country/Category</th>
+                                <th>Last Fetched</th>
+                                <th>Expires In</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.CachedTrendingArticles.Take(10))
+                            {
+                                var timeAgo = DateTime.UtcNow - item.Value.LastFetch;
+                                var timeAgoText = timeAgo.TotalHours >= 1 
+                                    ? $"{(int)timeAgo.TotalHours}h {timeAgo.Minutes}m ago" 
+                                    : $"{(int)timeAgo.TotalMinutes}m ago";
+                                var expiryText = item.Value.TimeUntilExpiry.TotalHours >= 1
+                                    ? $"{(int)item.Value.TimeUntilExpiry.TotalHours}h {item.Value.TimeUntilExpiry.Minutes}m"
+                                    : $"{(int)item.Value.TimeUntilExpiry.TotalMinutes}m";
+                                <tr>
+                                    <td><strong>@item.Key</strong></td>
+                                    <td>@timeAgoText</td>
+                                    <td>@expiryText</td>
+                                    <td>
+                                        <a href="@Url.Action("Trending", "Articles", new { country = item.Value.Country.ToLower() == "worldwide" ? "" : item.Value.Country.ToLower(), category = item.Value.Category, refresh = true })" 
+                                           class="btn btn-xs btn-outline-primary">
+                                            🔄 Refresh
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (Model.CachedTrendingArticles.Count > 10)
+                {
+                    <small class="text-muted">Showing 10 of @Model.CachedTrendingArticles.Count cached combinations</small>
+                }
+            </div>
+        </div>
+    }
+
     <div class="row">
         <!-- Recent Users -->
         <div class="col-lg-6 mb-4">
