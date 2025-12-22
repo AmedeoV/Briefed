@@ -34,12 +34,17 @@ public class GNewsService : IGNewsService
         try
         {
             // Build URL with parameters
-            var url = $"{BaseUrl}/top-headlines?token={_apiKey}&max={count}&lang=en";
+            var url = $"{BaseUrl}/top-headlines?token={_apiKey}&max={count}";
             
             // Add country parameter if specified (e.g., "us", "gb", "au", "ca", etc.)
             if (!string.IsNullOrEmpty(country))
             {
                 url += $"&country={country}";
+            }
+            else
+            {
+                // Only filter by English when showing worldwide news
+                url += "&lang=en";
             }
             
             // Add category parameter if specified (general, world, nation, business, technology, entertainment, sports, science, health)
