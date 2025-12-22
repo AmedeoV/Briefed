@@ -88,11 +88,19 @@ public class ArticlesController : Controller
                 .Select(ua => ua.ArticleId)
                 .ToHashSet();
             
+            _logger.LogInformation("Loaded {Count} read article IDs from database for user {UserId}: [{Ids}]", 
+                readArticleIds.Count, userId, string.Join(", ", readArticleIds.Take(20)));
+            
             var cacheOptions = new MemoryCacheEntryOptions()
                 .SetAbsoluteExpiration(TimeSpan.FromMinutes(5))
                 .SetSlidingExpiration(TimeSpan.FromMinutes(2));
             
             _cache.Set(readArticleIdsCacheKey, readArticleIds, cacheOptions);
+        }
+        else
+        {
+            _logger.LogInformation("Retrieved {Count} read article IDs from cache for user {UserId}", 
+                readArticleIds.Count, userId);
         }
         
         if (!_cache.TryGetValue(unreadCacheKey, out Dictionary<int, int> unreadCountsByFeed))
