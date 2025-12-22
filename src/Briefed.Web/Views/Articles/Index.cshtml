@@ -145,10 +145,10 @@ else
                                                 <button type="button" class="btn btn-sm btn-outline-success summarise-article-btn" data-article-id="@article.Id" data-summary-type="comprehensive">
                                                     ✨ Summarise
                                                 </button>
-                                                <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                                                <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <span class="visually-hidden">Toggle</span>
                                                 </button>
-                                                <ul class="dropdown-menu">
+                                                <ul class="dropdown-menu dropdown-menu-end">
                                                     <li><a class="dropdown-item article-summary-type" href="#" data-article-id="@article.Id" data-type="comprehensive">📝 Comprehensive</a></li>
                                                     <li><a class="dropdown-item article-summary-type" href="#" data-article-id="@article.Id" data-type="concise">⚡ Concise</a></li>
                                                 </ul>
@@ -615,6 +615,36 @@ else
         
         [data-theme="dark"] .swipeable-feed-header > .d-flex {
             background: var(--bs-dark, #212529);
+        }
+        
+        /* Fix dropdown menu visibility and styling */
+        .dropdown-menu {
+            z-index: 1050 !important;
+            background-color: white;
+            border: 1px solid rgba(0,0,0,.15);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.175);
+        }
+        
+        [data-theme="dark"] .dropdown-menu {
+            background-color: #2b3035;
+            border-color: rgba(255,255,255,.15);
+        }
+        
+        .dropdown-item {
+            color: #212529;
+            cursor: pointer;
+        }
+        
+        [data-theme="dark"] .dropdown-item {
+            color: #e9ecef;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        [data-theme="dark"] .dropdown-item:hover {
+            background-color: #495057;
         }
     </style>
 }
