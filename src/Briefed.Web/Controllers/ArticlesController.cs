@@ -1,5 +1,6 @@
 using Briefed.Core.Entities;
 using Briefed.Core.Interfaces;
+using Briefed.Core.Models;
 using Briefed.Infrastructure.Data;
 using Briefed.Infrastructure.Services;
 using Briefed.Web.Models;
@@ -362,7 +363,7 @@ public class ArticlesController : Controller
         var cacheKey = $"trending_{country ?? "worldwide"}_{category ?? "general"}";
         var lastFetchKey = $"trending_last_fetch_{country ?? "worldwide"}_{category ?? "general"}";
         
-        List<TrendingArticle> trendingArticles;
+        List<TrendingArticle> trendingArticles = new();
         
         // Check if admin wants to force refresh
         var user = await _userManager.GetUserAsync(User);
