@@ -153,6 +153,9 @@ else
                                                     <li><a class="dropdown-item article-summary-type" href="#" data-article-id="@article.Id" data-type="concise">⚡ Concise</a></li>
                                                 </ul>
                                             </div>
+                                            <button type="button" class="btn btn-sm btn-warning fact-check-btn" data-article-id="@article.Id" data-title="@article.Title" data-description="@article.Description">
+                                                🔍 Fact Check
+                                            </button>
                                             @if (!isRead)
                                             {
                                                 <form asp-action="MarkAsRead" asp-route-id="@article.Id" method="post" class="d-inline mark-read-form" data-article-id="@article.Id" data-feed-id="@article.FeedId">
@@ -167,6 +170,14 @@ else
                                                 <div class="card-body">
                                                     <h6 class="card-subtitle mb-2">🤖 AI Summary <span class="badge bg-info summary-type-badge"></span></h6>
                                                     <p class="card-text summary-content"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="fact-check-@article.Id" class="mt-3" style="display: none;">
+                                            <div class="card bg-warning bg-opacity-10">
+                                                <div class="card-body">
+                                                    <h6 class="card-subtitle mb-2">🔍 Fact Check</h6>
+                                                    <div class="fact-check-content"></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -427,6 +438,65 @@ else
                     }
                 } catch (error) {
                     alert('Error generating summary: ' + error.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            });
+        });
+        
+        // Handle fact-check button clicks
+        document.querySelectorAll('.fact-check-btn').forEach(button => {
+            button.addEventListener('click', async function() {
+                const articleId = this.dataset.articleId;
+                const title = this.dataset.title;
+                const description = this.dataset.description;
+                const originalText = this.innerHTML;
+                const factCheckDiv = document.getElementById('fact-check-' + articleId);
+                const factCheckContent = factCheckDiv.querySelector('.fact-check-content');
+                
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Checking...';
+                
+                try {
+                    const response = await fetch('/FactCheck/CheckArticle', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({
+                            title: title,
+                            description: description
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.factChecks && result.factChecks.length > 0) {
+                        let html = '<div class="list-group list-group-flush">';
+                        result.factChecks.forEach(fc => {
+                            html += `
+                                <div class="list-group-item px-0">
+                                    <h6 class="mb-1">${fc.title}</h6>
+                                    <p class="mb-1 small">${fc.text}</p>
+                                    <small><a href="${fc.url}" target="_blank" class="text-decoration-none">Read more →</a></small>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        factCheckContent.innerHTML = html;
+                        factCheckDiv.style.display = 'block';
+                        this.innerHTML = '✓ Fact Checked';
+                        this.classList.remove('btn-warning');
+                        this.classList.add('btn-success');
+                    } else {
+                        factCheckContent.innerHTML = '<p class="text-muted mb-0 small">No fact-checks found for this article.</p>';
+                        factCheckDiv.style.display = 'block';
+                        this.innerHTML = '✓ Checked';
+                        this.disabled = false;
+                    }
+                } catch (error) {
+                    alert('Error fact checking: ' + error.message);
                     this.innerHTML = originalText;
                     this.disabled = false;
                 }
