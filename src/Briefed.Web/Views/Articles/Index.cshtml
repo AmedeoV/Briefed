@@ -162,7 +162,7 @@ else
                                         <div id="summary-@article.Id" class="mt-3" style="display: none;">
                                             <div class="card bg-light">
                                                 <div class="card-body">
-                                                    <h6 class="card-subtitle mb-2">🤖 AI Summary</h6>
+                                                    <h6 class="card-subtitle mb-2">🤖 AI Summary <span class="badge bg-info summary-type-badge"></span></h6>
                                                     <p class="card-text summary-content"></p>
                                                 </div>
                                             </div>
@@ -326,6 +326,12 @@ else
                         btn.classList.add('btn-success');
                         btn.disabled = false;
                         
+                        // Update the badge to show which type is displayed
+                        const badge = summaryDiv.querySelector('.summary-type-badge');
+                        if (badge) {
+                            badge.textContent = summaryType === 'concise' ? '⚡ Concise' : '📝 Comprehensive';
+                        }
+                        
                         // Close dropdown
                         const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
                         if (dropdown) dropdown.hide();
@@ -364,6 +370,12 @@ else
                             btn.classList.remove('btn-outline-success');
                             btn.classList.add('btn-success');
                             btn.disabled = false;
+                            
+                            // Update the badge to show which type is displayed
+                            const badge = summaryDiv.querySelector('.summary-type-badge');
+                            if (badge) {
+                                badge.textContent = summaryType === 'concise' ? '⚡ Concise' : '📝 Comprehensive';
+                            }
                         } else {
                             alert('Error: ' + (result.error || 'Failed to generate summary'));
                             btn.innerHTML = originalText;
