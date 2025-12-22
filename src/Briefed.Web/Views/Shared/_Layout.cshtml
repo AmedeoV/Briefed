@@ -144,39 +144,40 @@
         }
 
         // Swipe-right gesture to show menu on mobile
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchEndX = 0;
-        let touchEndY = 0;
-        const swipeThreshold = 60; // Minimum distance for a swipe
+        let menuTouchStartX = 0;
+        let menuTouchStartY = 0;
+        let menuTouchEndX = 0;
+        let menuTouchEndY = 0;
+        const menuSwipeThreshold = 60; // Minimum distance for a swipe
 
+        // Use capture phase to intercept events before child handlers
         document.addEventListener('touchstart', function(e) {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
+            menuTouchStartX = e.changedTouches[0].screenX;
+            menuTouchStartY = e.changedTouches[0].screenY;
+        }, { passive: true, capture: true });
 
         document.addEventListener('touchend', function(e) {
-            touchEndX = e.changedTouches[0].screenX;
-            touchEndY = e.changedTouches[0].screenY;
-            handleSwipe();
-        }, { passive: true });
+            menuTouchEndX = e.changedTouches[0].screenX;
+            menuTouchEndY = e.changedTouches[0].screenY;
+            handleMenuSwipe();
+        }, { passive: true, capture: true });
 
-        function handleSwipe() {
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
+        function handleMenuSwipe() {
+            const deltaX = menuTouchEndX - menuTouchStartX;
+            const deltaY = menuTouchEndY - menuTouchStartY;
             
             // Check if swipe is primarily horizontal (not vertical scrolling)
-            if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+            if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && Math.abs(deltaX) > menuSwipeThreshold) {
                 const navbarCollapse = document.querySelector('.navbar-collapse');
                 if (!navbarCollapse) return;
                 
                 // Swipe right to open menu
-                if (deltaX > swipeThreshold && !navbarCollapse.classList.contains('show')) {
+                if (deltaX > menuSwipeThreshold && !navbarCollapse.classList.contains('show')) {
                     const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
                     bsCollapse.show();
                 }
                 // Swipe left to close menu if it's open
-                else if (deltaX < -swipeThreshold && navbarCollapse.classList.contains('show')) {
+                else if (deltaX < -menuSwipeThreshold && navbarCollapse.classList.contains('show')) {
                     const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
                     bsCollapse.hide();
                 }

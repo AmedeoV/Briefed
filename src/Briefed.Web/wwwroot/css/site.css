@@ -57,6 +57,8 @@ html {
 html {
   position: relative;
   min-height: 100%;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -66,6 +68,8 @@ body {
   background-color: var(--bg-primary);
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* Navbar theming */
