@@ -40,22 +40,29 @@ public class SummaryService : ISummaryService
 
     public async Task<Summary> GenerateSummaryAsync(int articleId, string articleContent, string summaryType = "comprehensive")
     {
-        var existing = await GetSummaryByArticleIdAsync(articleId);
+        // For trending articles (articleId = 0), skip database operations
+        var skipDatabase = articleId == 0;
         
-        // Check if we already have this specific summary type
-        if (existing != null)
+        Summary? existing = null;
+        if (!skipDatabase)
         {
-            var existingContent = summaryType == "concise" 
-                ? existing.ConciseContent 
-                : existing.ComprehensiveContent;
-                
-            if (!string.IsNullOrEmpty(existingContent))
-            {
-                _logger.LogInformation("Returning existing {SummaryType} summary for article {ArticleId}", summaryType, articleId);
-                return existing;
-            }
+            existing = await GetSummaryByArticleIdAsync(articleId);
             
-            _logger.LogInformation("Generating additional {SummaryType} summary for article {ArticleId}", summaryType, articleId);
+            // Check if we already have this specific summary type
+            if (existing != null)
+            {
+                var existingContent = summaryType == "concise" 
+                    ? existing.ConciseContent 
+                    : existing.ComprehensiveContent;
+                    
+                if (!string.IsNullOrEmpty(existingContent))
+                {
+                    _logger.LogInformation("Returning existing {SummaryType} summary for article {ArticleId}", summaryType, articleId);
+                    return existing;
+                }
+                
+                _logger.LogInformation("Generating additional {SummaryType} summary for article {ArticleId}", summaryType, articleId);
+            }
         }
 
         string summaryText;
@@ -86,6 +93,29 @@ public class SummaryService : ISummaryService
                 _logger.LogError(ollamaEx, "Both Groq and Ollama failed for article {ArticleId}", articleId);
                 throw new InvalidOperationException("Failed to generate summary with both Groq and Ollama", ollamaEx);
             }
+        }
+
+        // Skip database operations for trending articles
+        if (skipDatabase)
+        {
+            _logger.LogInformation("Skipping database save for trending article (non-persisted summary)");
+            var summary = new Summary
+            {
+                ArticleId = 0,
+                Content = summaryText,
+                Model = modelUsed
+            };
+            
+            if (summaryType == "concise")
+            {
+                summary.ConciseContent = summaryText;
+            }
+            else
+            {
+                summary.ComprehensiveContent = summaryText;
+            }
+            
+            return summary;
         }
 
         try
