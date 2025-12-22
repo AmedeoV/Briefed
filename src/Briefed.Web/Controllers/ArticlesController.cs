@@ -178,11 +178,19 @@ public class ArticlesController : Controller
                 return NotFound();
             }
 
-            // Check if summary already exists
+            // Check if summary already exists for this type
             var existingSummary = await _summaryService.GetSummaryByArticleIdAsync(id);
             if (existingSummary != null)
             {
-                return Json(new { success = true, summary = existingSummary.Content });
+                // Return existing summary if available for this type
+                var existingContent = summaryType == "concise" 
+                    ? existingSummary.ConciseContent 
+                    : existingSummary.ComprehensiveContent;
+                
+                if (!string.IsNullOrEmpty(existingContent))
+                {
+                    return Json(new { success = true, summary = existingContent });
+                }
             }
 
             // Fetch article content
@@ -199,7 +207,13 @@ public class ArticlesController : Controller
 
             // Generate summary
             var summary = await _summaryService.GenerateSummaryAsync(id, content, summaryType);
-            return Json(new { success = true, summary = summary.Content });
+            
+            // Return the appropriate summary content
+            var summaryContent = summaryType == "concise"
+                ? summary.ConciseContent
+                : summary.ComprehensiveContent;
+            
+            return Json(new { success = true, summary = summaryContent ?? summary.Content });
         }
         catch (Exception ex)
         {

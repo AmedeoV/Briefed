@@ -41,10 +41,21 @@ public class SummaryService : ISummaryService
     public async Task<Summary> GenerateSummaryAsync(int articleId, string articleContent, string summaryType = "comprehensive")
     {
         var existing = await GetSummaryByArticleIdAsync(articleId);
+        
+        // Check if we already have this specific summary type
         if (existing != null)
         {
-            _logger.LogInformation("Returning existing summary for article {ArticleId}", articleId);
-            return existing;
+            var existingContent = summaryType == "concise" 
+                ? existing.ConciseContent 
+                : existing.ComprehensiveContent;
+                
+            if (!string.IsNullOrEmpty(existingContent))
+            {
+                _logger.LogInformation("Returning existing {SummaryType} summary for article {ArticleId}", summaryType, articleId);
+                return existing;
+            }
+            
+            _logger.LogInformation("Generating additional {SummaryType} summary for article {ArticleId}", summaryType, articleId);
         }
 
         string summaryText;
@@ -79,19 +90,56 @@ public class SummaryService : ISummaryService
 
         try
         {
-            var summary = new Summary
+            if (existing != null)
             {
-                ArticleId = articleId,
-                Content = summaryText,
-                Model = modelUsed
-            };
+                // Update existing summary with the new type
+                if (summaryType == "concise")
+                {
+                    existing.ConciseContent = summaryText;
+                }
+                else
+                {
+                    existing.ComprehensiveContent = summaryText;
+                }
+                
+                // Keep the old Content field for backward compatibility
+                if (string.IsNullOrEmpty(existing.Content))
+                {
+                    existing.Content = summaryText;
+                }
+                
+                _context.Summaries.Update(existing);
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation("Successfully updated {SummaryType} summary for article {ArticleId}", summaryType, articleId);
+                return existing;
+            }
+            else
+            {
+                // Create new summary
+                var summary = new Summary
+                {
+                    ArticleId = articleId,
+                    Content = summaryText,
+                    Model = modelUsed
+                };
+                
+                if (summaryType == "concise")
+                {
+                    summary.ConciseContent = summaryText;
+                }
+                else
+                {
+                    summary.ComprehensiveContent = summaryText;
+                }
 
-            _context.Summaries.Add(summary);
-            await _context.SaveChangesAsync();
-            
-            _logger.LogInformation("Successfully saved summary for article {ArticleId} using {Model}", articleId, modelUsed);
+                _context.Summaries.Add(summary);
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation("Successfully saved {SummaryType} summary for article {ArticleId} using {Model}", summaryType, articleId, modelUsed);
 
-            return summary;
+                return summary;
+            }
         }
         catch (Exception ex)
         {
