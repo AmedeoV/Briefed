@@ -89,20 +89,20 @@ else
                             <button type="button" class="btn btn-sm @(isFavorite ? "btn-warning" : "btn-outline-warning")" 
                                     id="favorite-btn-@feed.Id"
                                     title="@(isFavorite ? "Remove from favorites" : "Add to favorites")" 
-                                    onclick="toggleFavorite(@feed.Id, '@feed.Title')">
+                                    onclick="event.stopPropagation(); event.preventDefault(); toggleFavorite(@feed.Id, '@feed.Title')">
                                 @(isFavorite ? "★" : "☆")
                             </button>
                             <button type="button" class="btn btn-sm btn-info" 
                                     id="resync-btn-@feed.Id"
                                     title="Re-sync article dates" 
-                                    onclick="resyncDates(@feed.Id, '@feed.Title')">
+                                    onclick="event.stopPropagation(); event.preventDefault(); resyncDates(@feed.Id, '@feed.Title')">
                                 🔄
                             </button>
                             <button type="button" class="btn btn-sm btn-success" 
                                     id="mark-read-btn-@feed.Id"
                                     title="Mark all as read" 
                                     @(unreadCount == 0 ? "disabled" : "")
-                                    onclick="event.stopPropagation(); markAllAsRead(@feed.Id, '@feed.Title')">
+                                    onclick="event.stopPropagation(); event.preventDefault(); markAllAsRead(@feed.Id, '@feed.Title')">
                                 ✓
                             </button>
                         </div>
