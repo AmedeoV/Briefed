@@ -54,6 +54,16 @@ public class GNewsService : IGNewsService
             
             var response = await _httpClient.GetAsync(url);
             
+            // Log rate limit headers if available
+            if (response.Headers.Contains("X-RateLimit-Limit"))
+            {
+                var limit = response.Headers.GetValues("X-RateLimit-Limit").FirstOrDefault();
+                var remaining = response.Headers.Contains("X-RateLimit-Remaining") 
+                    ? response.Headers.GetValues("X-RateLimit-Remaining").FirstOrDefault() 
+                    : "unknown";
+                _logger.LogInformation("GNews API Rate Limit: {Remaining}/{Limit} requests remaining", remaining, limit);
+            }
+            
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
