@@ -17,7 +17,6 @@ public class GNewsService : IGNewsService
     public GNewsService(HttpClient httpClient, IConfiguration configuration, ILogger<GNewsService> logger)
     {
         _httpClient = httpClient;
-        _httpClient.BaseAddress = new Uri(BaseUrl);
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Briefed/1.0 (RSS Reader)");
         _apiKey = configuration["GNews:ApiKey"];
         _logger = logger;
@@ -35,7 +34,7 @@ public class GNewsService : IGNewsService
         try
         {
             // Build URL with parameters
-            var url = $"/top-headlines?token={_apiKey}&max={count}&lang=en";
+            var url = $"{BaseUrl}/top-headlines?token={_apiKey}&max={count}&lang=en";
             
             // Add country parameter if specified (e.g., "us", "gb", "au", "ca", etc.)
             if (!string.IsNullOrEmpty(country))
