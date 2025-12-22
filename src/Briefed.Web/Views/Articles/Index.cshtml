@@ -291,8 +291,11 @@ else
             });
         })();
         
-        // Handle summary type selection for articles - directly summarise on click
+        // Handle summary type selection for articles - cache both summary types
         document.addEventListener('DOMContentLoaded', function() {
+            // Store summaries by article ID and type
+            const summaryCache = {};
+            
             document.querySelectorAll('.article-summary-type').forEach(option => {
                 option.addEventListener('click', async function(e) {
                     e.preventDefault();
@@ -307,14 +310,25 @@ else
                     
                     if (!btn || !summaryDiv) return;
                     
-                    // Check if already re-summarized once
-                    if (btn.dataset.resummaryUsed === 'true') {
-                        alert('Summary already generated. Refresh the page to generate a new one.');
-                        return;
+                    // Initialize cache for this article if needed
+                    if (!summaryCache[articleId]) {
+                        summaryCache[articleId] = {};
                     }
                     
-                    // Check if this is a re-summarization (already has summary)
-                    const isResummary = summaryDiv.style.display !== 'none' && summaryContent.textContent.trim() !== '';
+                    // Check if we already have this summary type cached
+                    if (summaryCache[articleId][summaryType]) {
+                        // Just display the cached summary
+                        summaryContent.textContent = summaryCache[articleId][summaryType];
+                        summaryDiv.style.display = 'block';
+                        btn.innerHTML = '✓ Summarised';
+                        btn.classList.remove('btn-outline-success');
+                        btn.classList.add('btn-success');
+                        
+                        // Close dropdown
+                        const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+                        if (dropdown) dropdown.hide();
+                        return;
+                    }
                     
                     // Close dropdown
                     const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
@@ -336,18 +350,16 @@ else
                         const result = await response.json();
                         
                         if (result.success) {
+                            // Cache the summary
+                            summaryCache[articleId][summaryType] = result.summary;
+                            
+                            // Display it
                             summaryContent.textContent = result.summary;
                             summaryDiv.style.display = 'block';
                             btn.innerHTML = '✓ Summarised';
                             btn.classList.remove('btn-outline-success');
                             btn.classList.add('btn-success');
-                            
-                            // If this was a re-summarization, mark it as used
-                            if (isResummary) {
-                                btn.dataset.resummaryUsed = 'true';
-                                // Disable the dropdown to prevent further changes
-                                dropdownToggle.disabled = true;
-                            }
+                            btn.disabled = false;
                         } else {
                             alert('Error: ' + (result.error || 'Failed to generate summary'));
                             btn.innerHTML = originalText;
