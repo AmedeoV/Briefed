@@ -4,6 +4,7 @@ using Briefed.Infrastructure.Data;
 using Briefed.Infrastructure.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +24,11 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<BriefedDbContext>()
 .AddDefaultTokenProviders();
+
+// Configure Data Protection to persist keys in database
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<BriefedDbContext>()
+    .SetApplicationName("Briefed");
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

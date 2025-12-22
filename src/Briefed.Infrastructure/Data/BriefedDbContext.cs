@@ -1,10 +1,11 @@
 using Briefed.Core.Entities;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Briefed.Infrastructure.Data;
 
-public class BriefedDbContext : IdentityDbContext<User>
+public class BriefedDbContext : IdentityDbContext<User>, IDataProtectionKeyContext
 {
     public BriefedDbContext(DbContextOptions<BriefedDbContext> options) : base(options)
     {
@@ -16,6 +17,7 @@ public class BriefedDbContext : IdentityDbContext<User>
     public DbSet<UserFeed> UserFeeds => Set<UserFeed>();
     public DbSet<UserArticle> UserArticles => Set<UserArticle>();
     public DbSet<SavedArticle> SavedArticles => Set<SavedArticle>();
+    public DbSet<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey> DataProtectionKeys => Set<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
