@@ -60,7 +60,11 @@ else
             : 0;
         <div class="mb-3">
             <div class="card">
-                <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#@feedId" aria-expanded="false">
+                <div class="card-header swipeable-feed-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#@feedId" aria-expanded="false" data-feed-id="@feed.Id" data-feed-title="@feed.Title" data-unread-count="@unreadCount">
+                    <div class="swipe-action-indicator">
+                        <span class="swipe-icon">✓</span>
+                        <span class="swipe-text">Mark all as read</span>
+                    </div>
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
                             <i class="collapse-icon me-2"></i>
@@ -173,6 +177,110 @@ else
 
 @section Scripts {
     <script>
+        // Swipe to mark as read functionality
+        (function() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            let activeHeader = null;
+            let isCollapsePrevented = false;
+            
+            const minSwipeDistance = 80;
+            const maxVerticalDeviation = 50;
+            
+            document.querySelectorAll('.swipeable-feed-header').forEach(header => {
+                header.addEventListener('touchstart', function(e) {
+                    touchStartX = e.changedTouches[0].screenX;
+                    touchStartY = e.changedTouches[0].screenY;
+                    activeHeader = this;
+                    isCollapsePrevented = false;
+                }, { passive: true });
+                
+                header.addEventListener('touchmove', function(e) {
+                    if (!activeHeader) return;
+                    
+                    touchEndX = e.changedTouches[0].screenX;
+                    touchEndY = e.changedTouches[0].screenY;
+                    
+                    const deltaX = touchStartX - touchEndX;
+                    const deltaY = Math.abs(touchStartY - touchEndY);
+                    
+                    // Only handle horizontal swipes
+                    if (Math.abs(deltaX) > 10 && deltaY < maxVerticalDeviation) {
+                        // Prevent collapse toggle during horizontal swipe
+                        if (!isCollapsePrevented) {
+                            isCollapsePrevented = true;
+                        }
+                        
+                        // Visual feedback for left swipe
+                        if (deltaX > 0) {
+                            const swipeProgress = Math.min(deltaX / minSwipeDistance, 1);
+                            this.style.transform = `translateX(-${deltaX * 0.3}px)`;
+                            this.style.transition = 'none';
+                            
+                            const indicator = this.querySelector('.swipe-action-indicator');
+                            indicator.style.opacity = swipeProgress;
+                        }
+                    }
+                }, { passive: true });
+                
+                header.addEventListener('touchend', function(e) {
+                    if (!activeHeader) return;
+                    
+                    touchEndX = e.changedTouches[0].screenX;
+                    touchEndY = e.changedTouches[0].screenY;
+                    
+                    const deltaX = touchStartX - touchEndX;
+                    const deltaY = Math.abs(touchStartY - touchEndY);
+                    
+                    // Reset visual state
+                    this.style.transform = '';
+                    this.style.transition = 'transform 0.3s ease';
+                    
+                    const indicator = this.querySelector('.swipe-action-indicator');
+                    indicator.style.opacity = '0';
+                    
+                    // Check if it's a valid left swipe
+                    if (deltaX > minSwipeDistance && deltaY < maxVerticalDeviation) {
+                        const feedId = this.dataset.feedId;
+                        const feedTitle = this.dataset.feedTitle;
+                        const unreadCount = parseInt(this.dataset.unreadCount);
+                        
+                        // Only trigger if there are unread articles
+                        if (unreadCount > 0) {
+                            markAllAsRead(feedId, feedTitle);
+                        }
+                        
+                        // Prevent collapse toggle
+                        e.preventDefault();
+                        e.stopPropagation();
+                    } else if (isCollapsePrevented) {
+                        // If we prevented collapse during move but didn't complete swipe,
+                        // still prevent the collapse from triggering
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    
+                    activeHeader = null;
+                    isCollapsePrevented = false;
+                    
+                    // Reset transition after animation
+                    setTimeout(() => {
+                        this.style.transition = '';
+                    }, 300);
+                }, { passive: false });
+                
+                // Handle click separately to prevent conflicts
+                header.addEventListener('click', function(e) {
+                    if (isCollapsePrevented) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                });
+            });
+        })();
+        
         document.querySelectorAll('.summarize-form').forEach(form => {
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -447,6 +555,47 @@ else
         }
         .read-article .card-body {
             color: var(--text-secondary);
+        }
+        
+        /* Swipe to mark as read styles */
+        .swipeable-feed-header {
+            position: relative;
+            overflow: hidden;
+            touch-action: pan-y;
+        }
+        
+        .swipe-action-indicator {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 120px;
+            background: linear-gradient(to left, #28a745, rgba(40, 167, 69, 0.8));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .swipe-action-indicator .swipe-icon {
+            font-size: 1.5em;
+            margin-bottom: 4px;
+        }
+        
+        .swipe-action-indicator .swipe-text {
+            font-size: 0.75em;
+            text-align: center;
+        }
+        
+        .swipeable-feed-header > div:first-of-type {
+            position: relative;
+            z-index: 1;
         }
     </style>
 }
