@@ -58,6 +58,7 @@ builder.Services.AddScoped<OpmlImportService>();
 
 // Add background services
 builder.Services.AddHostedService<TrendingSummaryCleanupService>();
+builder.Services.AddHostedService<ArticleCleanupService>();
 
 // Add Hangfire for background jobs
 builder.Services.AddHangfire(configuration => configuration
