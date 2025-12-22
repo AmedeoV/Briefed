@@ -141,10 +141,18 @@ else
                                         }
                                         <div class="mt-2">
                                             <a href="@Url.Action("Read", new { id = article.Id })" class="btn btn-sm btn-primary">Read</a>
-                                            <form asp-action="Summarise" asp-route-id="@article.Id" method="post" class="d-inline summarise-form" data-article-id="@article.Id">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-success">✨ Summarise</button>
-                                            </form>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-success summarise-article-btn" data-article-id="@article.Id" data-summary-type="comprehensive">
+                                                    ✨ Summarise
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                                                    <span class="visually-hidden">Toggle</span>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item article-summary-type" href="#" data-article-id="@article.Id" data-type="comprehensive">📝 Comprehensive</a></li>
+                                                    <li><a class="dropdown-item article-summary-type" href="#" data-article-id="@article.Id" data-type="concise">⚡ Concise</a></li>
+                                                </ul>
+                                            </div>
                                             <form asp-action="MarkAsRead" asp-route-id="@article.Id" method="post" class="d-inline mark-read-form" data-article-id="@article.Id" data-feed-id="@article.FeedId">
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-sm btn-outline-info">✓ Mark as Read</button>
@@ -283,24 +291,34 @@ else
             });
         })();
         
-        document.querySelectorAll('.summarise-form').forEach(form => {
-            form.addEventListener('submit', async function(e) {
+        // Handle summary type selection for articles
+        document.querySelectorAll('.article-summary-type').forEach(option => {
+            option.addEventListener('click', function(e) {
                 e.preventDefault();
-                
                 const articleId = this.dataset.articleId;
-                const button = this.querySelector('button');
-                const originalText = button.innerHTML;
+                const summaryType = this.dataset.type;
+                const btn = document.querySelector(`.summarise-article-btn[data-article-id="${articleId}"]`);
+                btn.dataset.summaryType = summaryType;
+            });
+        });
+        
+        document.querySelectorAll('.summarise-article-btn').forEach(button => {
+            button.addEventListener('click', async function() {
+                const articleId = this.dataset.articleId;
+                const summaryType = this.dataset.summaryType || 'comprehensive';
+                const originalText = this.innerHTML;
                 const summaryDiv = document.getElementById('summary-' + articleId);
                 const summaryContent = summaryDiv.querySelector('.summary-content');
                 
-                button.disabled = true;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
                 
                 try {
-                    const formData = new FormData(this);
-                    const response = await fetch(this.action, {
+                    const response = await fetch(`/Articles/Summarise?id=${articleId}&summaryType=${summaryType}`, {
                         method: 'POST',
-                        body: formData
+                        headers: {
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
                     });
                     
                     const result = await response.json();
@@ -308,18 +326,18 @@ else
                     if (result.success) {
                         summaryContent.textContent = result.summary;
                         summaryDiv.style.display = 'block';
-                        button.innerHTML = '✓ Summarised';
-                        button.classList.remove('btn-outline-success');
-                        button.classList.add('btn-success');
+                        this.innerHTML = '✓ Summarised';
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
                     } else {
                         alert('Error: ' + (result.error || 'Failed to generate summary'));
-                        button.innerHTML = originalText;
-                        button.disabled = false;
+                        this.innerHTML = originalText;
+                        this.disabled = false;
                     }
                 } catch (error) {
                     alert('Error generating summary: ' + error.message);
-                    button.innerHTML = originalText;
-                    button.disabled = false;
+                    this.innerHTML = originalText;
+                    this.disabled = false;
                 }
             });
         });
