@@ -69,6 +69,13 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// Apply database migrations automatically on startup
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<BriefedDbContext>();
+    dbContext.Database.Migrate();
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
