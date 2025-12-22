@@ -33,27 +33,24 @@ public class GNewsService : IGNewsService
 
         try
         {
-            // Build URL with parameters
-            var url = $"{BaseUrl}/top-headlines?token={_apiKey}&max={count}";
+            // Build base URL with parameters
+            var baseUrl = $"{BaseUrl}/top-headlines?token={_apiKey}&max={count}";
             
-            // Add country parameter if specified (e.g., "us", "gb", "au", "ca", etc.)
+            // Add country parameter if specified
             if (!string.IsNullOrEmpty(country))
             {
-                url += $"&country={country}";
-            }
-            else
-            {
-                // Only filter by English when showing worldwide news
-                url += "&lang=en";
+                baseUrl += $"&country={country}";
             }
             
-            // Add category parameter if specified (general, world, nation, business, technology, entertainment, sports, science, health)
+            // Add category parameter if specified
             if (!string.IsNullOrEmpty(category))
             {
-                url += $"&category={category}";
+                baseUrl += $"&category={category}";
             }
             
-            _logger.LogInformation("Fetching trending articles from GNews: {Url}", url.Replace(_apiKey, "***"));
+            // Try English first
+            var url = baseUrl + "&lang=en";
+            _logger.LogInformation("Fetching trending articles from GNews (English): {Url}", url.Replace(_apiKey, "***"));
             
             var response = await _httpClient.GetAsync(url);
             
@@ -81,7 +78,47 @@ public class GNewsService : IGNewsService
                 Category = category ?? "general"
             }).ToList() ?? new List<TrendingArticle>();
             
-            _logger.LogInformation("Successfully fetched {Count} trending articles from GNews", articles.Count);
+            // If no English articles found and country is specified, try without language filter
+            if (articles.Count == 0 && !string.IsNullOrEmpty(country))
+            {
+                _logger.LogInformation("No English articles found for country {Country}, trying native language", country);
+                
+                url = baseUrl; // Use base URL without lang parameter
+                _logger.LogInformation("Fetching trending articles from GNews (native language): {Url}", url.Replace(_apiKey, "***"));
+                
+                response = await _httpClient.GetAsync(url);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("GNews API fallback request failed with status {StatusCode}: {Content}", response.StatusCode, errorContent);
+                    return new List<TrendingArticle>();
+                }
+
+                json = await response.Content.ReadAsStringAsync();
+                result = JsonSerializer.Deserialize<GNewsResponse>(json, new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                });
+
+                articles = result?.Articles?.Select(a => new TrendingArticle
+                {
+                    Title = a.Title ?? "",
+                    Description = a.Description ?? "",
+                    Url = a.Url ?? "",
+                    Source = a.Source?.Name ?? "Unknown",
+                    PublishedAt = a.PublishedAt,
+                    ImageUrl = a.Image,
+                    Category = category ?? "general"
+                }).ToList() ?? new List<TrendingArticle>();
+                
+                _logger.LogInformation("Successfully fetched {Count} trending articles from GNews (fallback to native language)", articles.Count);
+            }
+            else
+            {
+                _logger.LogInformation("Successfully fetched {Count} trending articles from GNews", articles.Count);
+            }
+            
             return articles;
         }
         catch (Exception ex)
