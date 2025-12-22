@@ -153,10 +153,13 @@ else
                                                     <li><a class="dropdown-item article-summary-type" href="#" data-article-id="@article.Id" data-type="concise">⚡ Concise</a></li>
                                                 </ul>
                                             </div>
-                                            <form asp-action="MarkAsRead" asp-route-id="@article.Id" method="post" class="d-inline mark-read-form" data-article-id="@article.Id" data-feed-id="@article.FeedId">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-info">✓ Mark as Read</button>
-                                            </form>
+                                            @if (!isRead)
+                                            {
+                                                <form asp-action="MarkAsRead" asp-route-id="@article.Id" method="post" class="d-inline mark-read-form" data-article-id="@article.Id" data-feed-id="@article.FeedId">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-info">✓ Mark as Read</button>
+                                                </form>
+                                            }
                                             <a href="@article.Url" target="_blank" class="btn btn-sm btn-outline-secondary">Open Original</a>
                                         </div>
                                         <div id="summary-@article.Id" class="mt-3" style="display: none;">
