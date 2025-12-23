@@ -520,66 +520,86 @@ else
             });
         });
         
-        // Handle mark as read form submission
-        document.querySelectorAll('.mark-read-form').forEach(form => {
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
+        // Handle mark as read form submission using event delegation
+        document.addEventListener('submit', async function(e) {
+            if (!e.target.classList.contains('mark-read-form')) {
+                return;
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const form = e.target;
+            const articleId = form.dataset.articleId;
+            const feedId = form.dataset.feedId;
+            const button = form.querySelector('button');
+            const articleCard = form.closest('.card');
+            
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Marking...';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
                 
-                const articleId = this.dataset.articleId;
-                const feedId = this.dataset.feedId;
-                const button = this.querySelector('button');
-                const articleCard = this.closest('.card');
+                const result = await response.json();
                 
-                button.disabled = true;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Marking...';
-                
-                try {
-                    const formData = new FormData(this);
-                    const response = await fetch(this.action, {
-                        method: 'POST',
-                        body: formData
-                    });
+                if (result.success) {
+                    button.innerHTML = '✓ Read';
+                    button.classList.remove('btn-outline-info');
+                    button.classList.add('btn-info');
                     
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        button.innerHTML = '✓ Read';
-                        button.classList.remove('btn-outline-info');
-                        button.classList.add('btn-info');
-                        
-                        // Update the unread count badge
-                        const badge = document.getElementById(`unread-badge-${feedId}`);
-                        if (badge) {
-                            const currentText = badge.textContent;
-                            if (currentText.includes('unread')) {
-                                const count = parseInt(currentText.match(/\d+/)?.[0] || '0');
-                                if (count > 1) {
-                                    badge.textContent = `${count - 1} unread`;
-                                } else {
-                                    badge.className = 'badge bg-secondary';
-                                    badge.textContent = 'All read';
-                                }
+                    // Update the unread count badge
+                    const badge = document.getElementById(`unread-badge-${feedId}`);
+                    if (badge) {
+                        const currentText = badge.textContent;
+                        if (currentText.includes('unread')) {
+                            const count = parseInt(currentText.match(/\d+/)?.[0] || '0');
+                            if (count > 1) {
+                                badge.textContent = `${count - 1} unread`;
+                            } else {
+                                badge.className = 'badge bg-secondary';
+                                badge.textContent = 'All read';
                             }
                         }
-                        
-                        // If on "unread" filter, fade out the article
-                        if (window.location.search.includes('filter=unread')) {
-                            articleCard.style.opacity = '0.5';
-                            setTimeout(() => {
-                                articleCard.remove();
-                            }, 1000);
-                        }
-                    } else {
-                        alert('Error: ' + (result.error || 'Failed to mark as read'));
-                        button.innerHTML = '✓ Mark as Read';
-                        button.disabled = false;
                     }
-                } catch (error) {
-                    alert('Error marking as read: ' + error.message);
+                    
+                    // If on "unread" filter, fade out and remove the article
+                    if (window.location.search.includes('filter=unread')) {
+                        articleCard.style.transition = 'opacity 0.5s';
+                        articleCard.style.opacity = '0';
+                        setTimeout(() => {
+                            articleCard.remove();
+                            
+                            // Check if this was the last article in the feed section
+                            const feedSection = document.getElementById(`feed-${feedId}`);
+                            if (feedSection && feedSection.querySelectorAll('.card').length === 0) {
+                                // Hide the entire feed section if no articles remain
+                                const feedHeader = document.querySelector(`[data-bs-target="#feed-${feedId}"]`).closest('.accordion-item');
+                                if (feedHeader) {
+                                    feedHeader.style.transition = 'opacity 0.5s';
+                                    feedHeader.style.opacity = '0';
+                                    setTimeout(() => feedHeader.remove(), 500);
+                                }
+                            }
+                        }, 500);
+                    }
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to mark as read'));
                     button.innerHTML = '✓ Mark as Read';
                     button.disabled = false;
                 }
-            });
+            } catch (error) {
+                console.error('Error marking as read:', error);
+                alert('Error marking as read: ' + error.message);
+                button.innerHTML = '✓ Mark as Read';
+                button.disabled = false;
+            }
+            
+            return false;
         });
         
         // Rotate chevron icon on collapse
@@ -641,30 +661,54 @@ else
                         header.dataset.unreadCount = '0';
                     }
                     
-                    // Mark all articles in this feed as read visually
-                    const feedCollapse = document.getElementById(`feed-${feedId}`);
-                    if (feedCollapse) {
-                        const articleDivs = feedCollapse.querySelectorAll('.border-bottom.p-3');
-                        articleDivs.forEach(div => {
-                            // Add read-article class if not already present
-                            if (!div.classList.contains('read-article')) {
-                                div.classList.add('read-article');
-                            }
-                            
-                            // Update article title link to muted
-                            const titleLink = div.querySelector('h5 a');
-                            if (titleLink && !titleLink.classList.contains('text-muted')) {
-                                titleLink.classList.remove('text-dark');
-                                titleLink.classList.add('text-muted');
-                            }
-                            
-                            // Disable "Mark as Read" button for each article
-                            const markReadBtn = div.querySelector('.mark-read-form button');
-                            if (markReadBtn) {
-                                markReadBtn.disabled = true;
-                                markReadBtn.classList.add('disabled');
-                            }
-                        });
+                    // If on "unread" filter, fade out and remove the entire feed section
+                    if (window.location.search.includes('filter=unread')) {
+                        const feedItem = header?.closest('.accordion-item');
+                        if (feedItem) {
+                            feedItem.style.transition = 'opacity 0.5s';
+                            feedItem.style.opacity = '0';
+                            setTimeout(() => {
+                                feedItem.remove();
+                                
+                                // Check if there are no more feeds, show empty state
+                                const accordion = document.querySelector('.accordion');
+                                if (accordion && accordion.querySelectorAll('.accordion-item').length === 0) {
+                                    accordion.innerHTML = `
+                                        <div class="alert alert-info">
+                                            <h5>No articles found</h5>
+                                            <p>You're all caught up! No unread articles.</p>
+                                            <a href="/Feeds" class="btn btn-primary">Manage Feeds</a>
+                                        </div>
+                                    `;
+                                }
+                            }, 500);
+                        }
+                    } else {
+                        // Mark all articles in this feed as read visually
+                        const feedCollapse = document.getElementById(`feed-${feedId}`);
+                        if (feedCollapse) {
+                            const articleDivs = feedCollapse.querySelectorAll('.border-bottom.p-3');
+                            articleDivs.forEach(div => {
+                                // Add read-article class if not already present
+                                if (!div.classList.contains('read-article')) {
+                                    div.classList.add('read-article');
+                                }
+                                
+                                // Update article title link to muted
+                                const titleLink = div.querySelector('h5 a');
+                                if (titleLink && !titleLink.classList.contains('text-muted')) {
+                                    titleLink.classList.remove('text-dark');
+                                    titleLink.classList.add('text-muted');
+                                }
+                                
+                                // Disable "Mark as Read" button for each article
+                                const markReadBtn = div.querySelector('.mark-read-form button');
+                                if (markReadBtn) {
+                                    markReadBtn.disabled = true;
+                                    markReadBtn.classList.add('disabled');
+                                }
+                            });
+                        }
                     }
                     
                     // Show success message (optional)
