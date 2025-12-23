@@ -61,15 +61,26 @@ public class FeedUpdateService
 
             _logger.LogInformation("Fetched {ArticleCount} articles from {FeedTitle}", articles.Count(), feed.Title);
 
+            // Get existing article URLs for this feed
             var existingUrls = await _context.Articles
                 .Where(a => a.FeedId == feed.Id)
                 .Select(a => a.Url)
                 .ToListAsync();
 
-            _logger.LogInformation("Feed {FeedTitle} has {ExistingCount} existing articles", feed.Title, existingUrls.Count);
+            // Get deleted article URLs (tombstones) to prevent re-fetching
+            var deletedUrls = await _context.DeletedArticles
+                .Select(a => a.Url)
+                .ToListAsync();
 
+            _logger.LogInformation("Feed {FeedTitle} has {ExistingCount} existing articles, {DeletedCount} deleted articles (tombstones)", 
+                feed.Title, existingUrls.Count, deletedUrls.Count);
+
+            // Only accept articles from the last 14 days and not in deleted list
+            var cutoffDate = DateTime.UtcNow.AddDays(-14);
             var newArticles = articles
-                .Where(a => !existingUrls.Contains(a.Url))
+                .Where(a => !existingUrls.Contains(a.Url) 
+                         && !deletedUrls.Contains(a.Url)
+                         && a.PublishedAt >= cutoffDate)
                 .ToList();
 
             if (newArticles.Any())
@@ -80,7 +91,8 @@ public class FeedUpdateService
                 }
 
                 _context.Articles.AddRange(newArticles);
-                _logger.LogInformation("Adding {Count} new articles for feed {FeedTitle}", newArticles.Count, feed.Title);
+                _logger.LogInformation("Adding {Count} new articles for feed {FeedTitle} (filtered {Filtered} old/deleted articles)", 
+                    newArticles.Count, feed.Title, articles.Count() - newArticles.Count - existingUrls.Count);
             }
             else
             {

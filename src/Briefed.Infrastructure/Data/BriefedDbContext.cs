@@ -18,6 +18,7 @@ public class BriefedDbContext : IdentityDbContext<User>, IDataProtectionKeyConte
     public DbSet<UserFeed> UserFeeds => Set<UserFeed>();
     public DbSet<UserArticle> UserArticles => Set<UserArticle>();
     public DbSet<SavedArticle> SavedArticles => Set<SavedArticle>();
+    public DbSet<DeletedArticle> DeletedArticles => Set<DeletedArticle>();
     public DbSet<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey> DataProtectionKeys => Set<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -126,6 +127,15 @@ public class BriefedDbContext : IdentityDbContext<User>, IDataProtectionKeyConte
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => new { e.UserId, e.ArticleId }).IsUnique();
+        });
+
+        // DeletedArticle configuration (tombstone table)
+        modelBuilder.Entity<DeletedArticle>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Url).IsRequired().HasMaxLength(2000);
+            entity.HasIndex(e => e.Url); // Index for fast lookups
+            entity.HasIndex(e => e.DeletedAt);
         });
     }
 }

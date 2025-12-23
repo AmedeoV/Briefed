@@ -1,3 +1,4 @@
+using Briefed.Core.Entities;
 using Briefed.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +12,7 @@ public class ArticleCleanupService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ArticleCleanupService> _logger;
     private readonly TimeSpan _checkInterval = TimeSpan.FromDays(1); // Check daily
-    private readonly int _articleRetentionDays = 30;
+    private readonly int _articleRetentionDays = 60; // Keep articles for 60 days
 
     public ArticleCleanupService(
         IServiceProvider serviceProvider,
@@ -54,10 +55,18 @@ public class ArticleCleanupService : BackgroundService
 
         if (oldArticles.Any())
         {
+            // Store tombstones before deleting articles to prevent re-fetching
+            var tombstones = oldArticles.Select(a => new DeletedArticle
+            {
+                Url = a.Url,
+                DeletedAt = DateTime.UtcNow
+            }).ToList();
+
+            await context.DeletedArticles.AddRangeAsync(tombstones);
             context.Articles.RemoveRange(oldArticles);
             await context.SaveChangesAsync();
             
-            _logger.LogInformation("Cleaned up {Count} articles older than {Days} days (published before {Date})", 
+            _logger.LogInformation("Cleaned up {Count} articles older than {Days} days (published before {Date}) and stored tombstones", 
                 oldArticles.Count, _articleRetentionDays, cutoffDate);
         }
         else
