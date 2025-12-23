@@ -533,7 +533,7 @@ else
             const articleId = form.dataset.articleId;
             const feedId = form.dataset.feedId;
             const button = form.querySelector('button');
-            const articleCard = form.closest('.card');
+            const articleDiv = form.closest('.border-bottom');
             
             button.disabled = true;
             button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Marking...';
@@ -548,10 +548,6 @@ else
                 const result = await response.json();
                 
                 if (result.success) {
-                    button.innerHTML = '✓ Read';
-                    button.classList.remove('btn-outline-info');
-                    button.classList.add('btn-info');
-                    
                     // Update the unread count badge
                     const badge = document.getElementById(`unread-badge-${feedId}`);
                     if (badge) {
@@ -569,23 +565,54 @@ else
                     
                     // If on "unread" filter, fade out and remove the article
                     if (window.location.search.includes('filter=unread')) {
-                        articleCard.style.transition = 'opacity 0.5s';
-                        articleCard.style.opacity = '0';
+                        // First, check how many unread articles remain in this feed (before removal)
+                        const feedSection = document.getElementById(`feed-${feedId}`);
+                        const unreadArticlesInFeed = feedSection ? feedSection.querySelectorAll('.border-bottom:not(.read-article)').length : 0;
+                        
+                        // Fade out and remove this article
+                        articleDiv.style.transition = 'opacity 0.5s';
+                        articleDiv.style.opacity = '0';
+                        
                         setTimeout(() => {
-                            articleCard.remove();
+                            articleDiv.remove();
                             
-                            // Check if this was the last article in the feed section
-                            const feedSection = document.getElementById(`feed-${feedId}`);
-                            if (feedSection && feedSection.querySelectorAll('.card').length === 0) {
-                                // Hide the entire feed section if no articles remain
-                                const feedHeader = document.querySelector(`[data-bs-target="#feed-${feedId}"]`).closest('.accordion-item');
-                                if (feedHeader) {
-                                    feedHeader.style.transition = 'opacity 0.5s';
-                                    feedHeader.style.opacity = '0';
-                                    setTimeout(() => feedHeader.remove(), 500);
+                            // If this was the last unread article in the feed, remove the entire feed section
+                            if (unreadArticlesInFeed <= 1) {
+                                const feedItem = document.querySelector(`[data-bs-target="#feed-${feedId}"]`)?.closest('.accordion-item');
+                                if (feedItem) {
+                                    feedItem.style.transition = 'opacity 0.5s';
+                                    feedItem.style.opacity = '0';
+                                    setTimeout(() => {
+                                        feedItem.remove();
+                                        
+                                        // Check if there are no more feeds, show empty state
+                                        const accordion = document.querySelector('.accordion');
+                                        if (accordion && accordion.querySelectorAll('.accordion-item').length === 0) {
+                                            accordion.innerHTML = `
+                                                <div class="alert alert-info">
+                                                    <h5>No articles found</h5>
+                                                    <p>You're all caught up! No unread articles.</p>
+                                                    <a href="/Feeds" class="btn btn-primary">Manage Feeds</a>
+                                                </div>
+                                            `;
+                                        }
+                                    }, 500);
                                 }
                             }
                         }, 500);
+                    } else {
+                        // Not on unread filter - just update the button and styling
+                        button.innerHTML = '✓ Read';
+                        button.classList.remove('btn-outline-info');
+                        button.classList.add('btn-info');
+                        articleDiv.classList.add('read-article');
+                        
+                        // Update article title to muted
+                        const titleLink = articleDiv.querySelector('h5 a');
+                        if (titleLink) {
+                            titleLink.classList.remove('text-dark');
+                            titleLink.classList.add('text-muted');
+                        }
                     }
                 } else {
                     alert('Error: ' + (result.error || 'Failed to mark as read'));
