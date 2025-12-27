@@ -2,6 +2,110 @@
     ViewData["Title"] = "Delete Account";
 }
 
+<style>
+    /* Dark mode support */
+    [data-theme="dark"] .card {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #e9ecef;
+    }
+    
+    [data-theme="dark"] .card-body,
+    [data-theme="dark"] .card-body p,
+    [data-theme="dark"] .card-body ul,
+    [data-theme="dark"] .card-body li,
+    [data-theme="dark"] .card-body ol,
+    [data-theme="dark"] .card-body strong {
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] h1,
+    [data-theme="dark"] h2,
+    [data-theme="dark"] h3,
+    [data-theme="dark"] h4,
+    [data-theme="dark"] h5 {
+        color: #f8f9fa !important;
+    }
+    
+    [data-theme="dark"] .alert-warning {
+        background-color: rgba(255, 193, 7, 0.2);
+        border-color: rgba(255, 193, 7, 0.3);
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] .alert-warning h4,
+    [data-theme="dark"] .alert-warning p {
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] .alert-info {
+        background-color: rgba(13, 110, 253, 0.2);
+        border-color: rgba(13, 110, 253, 0.3);
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] .alert-info p,
+    [data-theme="dark"] .alert-info strong {
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] .bg-light {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    /* Fallback for prefers-color-scheme */
+    @@media (prefers-color-scheme: dark) {
+        .card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e9ecef;
+        }
+        
+        .card-body,
+        .card-body p,
+        .card-body ul,
+        .card-body li,
+        .card-body ol,
+        .card-body strong {
+            color: #e9ecef !important;
+        }
+        
+        h1,
+        h2,
+        h3,
+        h4,
+        h5 {
+            color: #f8f9fa !important;
+        }
+        
+        .alert-warning {
+            background-color: rgba(255, 193, 7, 0.2);
+            border-color: rgba(255, 193, 7, 0.3);
+            color: #e9ecef !important;
+        }
+        
+        .alert-warning h4,
+        .alert-warning p {
+            color: #e9ecef !important;
+        }
+        
+        .alert-info {
+            background-color: rgba(13, 110, 253, 0.2);
+            border-color: rgba(13, 110, 253, 0.3);
+            color: #e9ecef !important;
+        }
+        
+        .alert-info p,
+        .alert-info strong {
+            color: #e9ecef !important;
+        }
+        
+        .bg-light {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+    }
+</style>
+
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
