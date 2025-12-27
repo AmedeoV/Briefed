@@ -3,20 +3,66 @@
 }
 
 <style>
+    /* Light mode defaults */
     .privacy-card {
-        background-color: var(--bs-body-bg);
-        border: 1px solid var(--bs-border-color);
+        background-color: #fff;
+        border: 1px solid #dee2e6;
     }
     
     .privacy-card .card-body {
-        color: var(--bs-body-color);
+        color: #212529;
     }
     
     .privacy-card h2,
-    .privacy-card h3 {
-        color: var(--bs-body-color);
+    .privacy-card h3,
+    .privacy-card h4,
+    .privacy-card h5 {
+        color: #212529;
     }
     
+    /* Dark mode - using data-theme attribute */
+    [data-theme="dark"] .privacy-card {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    [data-theme="dark"] .privacy-card .card-body,
+    [data-theme="dark"] .privacy-card .card-body p,
+    [data-theme="dark"] .privacy-card .card-body ul,
+    [data-theme="dark"] .privacy-card .card-body li,
+    [data-theme="dark"] .privacy-card .card-body strong {
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] .privacy-card h2,
+    [data-theme="dark"] .privacy-card h3,
+    [data-theme="dark"] .privacy-card h4,
+    [data-theme="dark"] .privacy-card h5 {
+        color: #f8f9fa !important;
+    }
+    
+    [data-theme="dark"] .alert-info {
+        background-color: rgba(13, 110, 253, 0.2);
+        border-color: rgba(13, 110, 253, 0.3);
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] .alert-info ul,
+    [data-theme="dark"] .alert-info li,
+    [data-theme="dark"] .alert-info p,
+    [data-theme="dark"] .alert-info h3 {
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] .text-muted {
+        color: #adb5bd !important;
+    }
+    
+    [data-theme="dark"] .container h1 {
+        color: #f8f9fa !important;
+    }
+    
+    /* Dark mode - using prefers-color-scheme as fallback */
     @@media (prefers-color-scheme: dark) {
         .privacy-card {
             background-color: rgba(255, 255, 255, 0.05);
@@ -26,7 +72,8 @@
         .privacy-card .card-body,
         .privacy-card .card-body p,
         .privacy-card .card-body ul,
-        .privacy-card .card-body li {
+        .privacy-card .card-body li,
+        .privacy-card .card-body strong {
             color: #e9ecef !important;
         }
         
@@ -45,7 +92,8 @@
         
         .alert-info ul,
         .alert-info li,
-        .alert-info p {
+        .alert-info p,
+        .alert-info h3 {
             color: #e9ecef !important;
         }
         
