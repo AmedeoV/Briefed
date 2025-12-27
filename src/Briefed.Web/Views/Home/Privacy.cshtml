@@ -2,11 +2,40 @@
     ViewData["Title"] = "Privacy Policy";
 }
 
+<style>
+    .privacy-card {
+        background-color: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+    }
+    
+    .privacy-card .card-body {
+        color: var(--bs-body-color);
+    }
+    
+    .privacy-card h2,
+    .privacy-card h3 {
+        color: var(--bs-body-color);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .privacy-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .alert-info {
+            background-color: rgba(13, 110, 253, 0.2);
+            border-color: rgba(13, 110, 253, 0.3);
+            color: var(--bs-body-color);
+        }
+    }
+</style>
+
 <div class="container my-5">
     <h1 class="mb-4">Privacy Policy for Briefed</h1>
     <p class="text-muted"><strong>Last Updated:</strong> December 27, 2025</p>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">1. Introduction</h2>
             <p>
@@ -19,7 +48,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">2. Information We Collect</h2>
             
@@ -49,7 +78,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">3. How We Use Your Information</h2>
             <p>We use the collected information for:</p>
@@ -66,7 +95,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">4. AI-Generated Content</h2>
             <p>
@@ -91,7 +120,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">5. Data Sharing and Disclosure</h2>
             <p>We do not sell your personal information. We may share your information only in the following circumstances:</p>
@@ -120,7 +149,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">6. Data Storage and Security</h2>
             <p>We implement appropriate technical and organizational measures to protect your information:</p>
@@ -138,7 +167,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">7. Data Retention</h2>
             <p>We retain your personal information for as long as:</p>
@@ -155,7 +184,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">8. Your Rights and Choices</h2>
             <p>Depending on your location, you may have the following rights:</p>
@@ -187,7 +216,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">9. Children's Privacy</h2>
             <p>
@@ -201,7 +230,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">10. International Data Transfers</h2>
             <p>
@@ -216,7 +245,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">11. Third-Party Services</h2>
             <p>Briefed integrates with third-party services:</p>
@@ -242,7 +271,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">12. Cookies and Tracking</h2>
             <p>We use cookies and similar technologies:</p>
@@ -266,7 +295,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">13. Changes to This Privacy Policy</h2>
             <p>
@@ -283,7 +312,7 @@
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 privacy-card">
         <div class="card-body">
             <h2 class="h4 mb-3">14. Contact Us</h2>
             <p>If you have questions, concerns, or requests regarding this Privacy Policy or your personal information, please contact us:</p>
