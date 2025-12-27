@@ -3,6 +3,88 @@
     ViewData["Title"] = "Account Profile";
 }
 
+<style>
+    /* Dark mode support */
+    [data-theme="dark"] .card {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #e9ecef;
+    }
+    
+    [data-theme="dark"] .card-header {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #f8f9fa;
+    }
+    
+    [data-theme="dark"] .card-body,
+    [data-theme="dark"] .card-body strong,
+    [data-theme="dark"] .form-label,
+    [data-theme="dark"] .form-text {
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] h2,
+    [data-theme="dark"] h5,
+    [data-theme="dark"] h6 {
+        color: #f8f9fa !important;
+    }
+    
+    [data-theme="dark"] .card.border-danger {
+        border-color: rgba(220, 53, 69, 0.5) !important;
+    }
+    
+    [data-theme="dark"] .card.border-danger .card-body ul,
+    [data-theme="dark"] .card.border-danger .card-body li {
+        color: #e9ecef !important;
+    }
+    
+    [data-theme="dark"] .text-muted {
+        color: #adb5bd !important;
+    }
+    
+    /* Fallback for prefers-color-scheme */
+    @@media (prefers-color-scheme: dark) {
+        .card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e9ecef;
+        }
+        
+        .card-header {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #f8f9fa;
+        }
+        
+        .card-body,
+        .card-body strong,
+        .form-label,
+        .form-text {
+            color: #e9ecef !important;
+        }
+        
+        h2,
+        h5,
+        h6 {
+            color: #f8f9fa !important;
+        }
+        
+        .card.border-danger {
+            border-color: rgba(220, 53, 69, 0.5) !important;
+        }
+        
+        .card.border-danger .card-body ul,
+        .card.border-danger .card-body li {
+            color: #e9ecef !important;
+        }
+        
+        .text-muted {
+            color: #adb5bd !important;
+        }
+    }
+</style>
+
 <div class="container mt-4">
     <div class="row">
         <div class="col-lg-8 mx-auto">
