@@ -1,0 +1,80 @@
+@{
+    ViewData["Title"] = "Delete Account";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="mb-4">Delete Your Account</h1>
+            
+            <div class="alert alert-warning">
+                <h4 class="alert-heading">⚠️ Account Deletion Request</h4>
+                <p>If you wish to delete your Briefed account and associated data, please follow the instructions below.</p>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">What Will Be Deleted</h3>
+                    <p>When you delete your account, the following data will be permanently removed:</p>
+                    <ul>
+                        <li>Your account profile (email, username)</li>
+                        <li>All your RSS feed subscriptions</li>
+                        <li>Your reading history and marked articles</li>
+                        <li>Saved articles and bookmarks</li>
+                        <li>All preferences and settings</li>
+                    </ul>
+                    <p class="mb-0"><strong>Note:</strong> This action cannot be undone. All your data will be permanently deleted within 30 days.</p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">How to Request Account Deletion</h3>
+                    
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="alert alert-info">
+                            <p class="mb-2"><strong>You are currently logged in as:</strong> @User.Identity.Name</p>
+                        </div>
+                        
+                        <p class="mb-3">To delete your account, please send an email to our support team:</p>
+                        
+                        <div class="bg-light p-3 rounded mb-3">
+                            <p class="mb-2"><strong>Email:</strong> <a href="mailto:admin@briefed.com?subject=Account Deletion Request&body=I would like to delete my Briefed account.%0D%0A%0D%0AEmail: @User.Identity.Name%0D%0A%0D%0APlease confirm the deletion of my account and all associated data.">admin@briefed.com</a></p>
+                            <p class="mb-2"><strong>Subject:</strong> Account Deletion Request</p>
+                            <p class="mb-0"><strong>Include:</strong> Your registered email address (@User.Identity.Name)</p>
+                        </div>
+                        
+                        <a href="mailto:admin@briefed.com?subject=Account Deletion Request&body=I would like to delete my Briefed account.%0D%0A%0D%0AEmail: @User.Identity.Name%0D%0A%0D%0APlease confirm the deletion of my account and all associated data." 
+                           class="btn btn-danger">
+                            📧 Send Deletion Request Email
+                        </a>
+                    }
+                    else
+                    {
+                        <p class="mb-3">To delete your account, please:</p>
+                        <ol>
+                            <li class="mb-2"><a asp-action="Login" asp-controller="Account">Log in to your account</a></li>
+                            <li class="mb-2">Send an email to <a href="mailto:admin@briefed.com?subject=Account Deletion Request">admin@briefed.com</a></li>
+                            <li class="mb-2">Include your registered email address</li>
+                            <li class="mb-2">Use the subject line: "Account Deletion Request"</li>
+                        </ol>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Processing Time</h3>
+                    <p class="mb-2">We will process your deletion request within <strong>30 days</strong>.</p>
+                    <p class="mb-0">You will receive a confirmation email once your account and data have been permanently deleted.</p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a asp-controller="Home" asp-action="Privacy" class="btn btn-link">View Privacy Policy</a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-link">Back to Home</a>
+            </div>
+        </div>
+    </div>
+</div>

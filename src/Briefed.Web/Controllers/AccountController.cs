@@ -97,6 +97,12 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
+    [HttpGet]
+    public IActionResult DeleteAccount()
+    {
+        return View();
+    }
+
     private IActionResult RedirectToLocal(string? returnUrl)
     {
         if (Url.IsLocalUrl(returnUrl))
