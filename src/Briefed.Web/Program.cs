@@ -53,6 +53,7 @@ builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<ISummaryService, SummaryService>();
 builder.Services.AddScoped<IGroqService, GroqService>();
 builder.Services.AddScoped<IOllamaService, OllamaService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<FeedUpdateService>();
 builder.Services.AddScoped<OpmlImportService>();
 

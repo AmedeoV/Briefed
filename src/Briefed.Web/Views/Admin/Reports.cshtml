@@ -1,0 +1,158 @@
+@model IEnumerable<Briefed.Core.Entities.ContentReport>
+@{
+    ViewData["Title"] = "Content Reports";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>⚠️ Content Reports</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">← Back to Dashboard</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <h4 class="alert-heading">✓ No Unresolved Reports</h4>
+            <p class="mb-0">There are currently no unresolved content reports. All reports have been addressed.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Unresolved Reports (@Model.Count())</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Content Type</th>
+                                <th>Reported By</th>
+                                <th>Reason</th>
+                                <th>Article</th>
+                                <th>Reported At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var report in Model)
+                            {
+                                <tr>
+                                    <td>@report.Id</td>
+                                    <td>
+                                        <span class="badge @(report.ContentType == "Summary" ? "bg-success" : "bg-warning")">
+                                            @(report.ContentType == "Summary" ? "🤖 Summary" : "🔍 Fact Check")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small>@report.User.Email</small>
+                                    </td>
+                                    <td>
+                                        <strong>@report.Reason</strong>
+                                        @if (!string.IsNullOrEmpty(report.AdditionalDetails))
+                                        {
+                                            <br />
+                                            <small class="text-muted">@report.AdditionalDetails</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (report.Article != null)
+                                        {
+                                            <a asp-controller="Articles" asp-action="Read" asp-route-id="@report.Article.Id" target="_blank">
+                                                @report.Article.Title
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A (Trending)</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <small>@report.ReportedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</small>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#resolveModal-@report.Id">
+                                            ✓ Resolve
+                                        </button>
+
+                                        <!-- Modal -->
+                                        <div class="modal fade" id="resolveModal-@report.Id" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Resolve Report #@report.Id</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form asp-action="ResolveReport" method="post">
+                                                        <input type="hidden" name="id" value="@report.Id" />
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Content Type:</label>
+                                                                <p><strong>@report.ContentType</strong></p>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Reason:</label>
+                                                                <p><strong>@report.Reason</strong></p>
+                                                            </div>
+                                                            @if (!string.IsNullOrEmpty(report.AdditionalDetails))
+                                                            {
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Additional Details:</label>
+                                                                    <p>@report.AdditionalDetails</p>
+                                                                </div>
+                                                            }
+                                                            <div class="mb-3">
+                                                                <label for="resolutionNotes-@report.Id" class="form-label">Resolution Notes:</label>
+                                                                <textarea class="form-control" id="resolutionNotes-@report.Id" name="resolutionNotes" rows="3" placeholder="Enter your resolution notes..."></textarea>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-success">Mark as Resolved</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .table td:nth-child(4) {
+        max-width: 300px;
+    }
+    
+    .table td:nth-child(5) {
+        max-width: 250px;
+    }
+</style>

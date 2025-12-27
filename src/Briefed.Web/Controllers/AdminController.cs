@@ -20,6 +20,7 @@ public class AdminController : Controller
     private readonly ILogger<AdminController> _logger;
     private readonly IRecurringJobManager _recurringJobManager;
     private readonly IMemoryCache _cache;
+    private readonly IReportService _reportService;
 
     public AdminController(
         BriefedDbContext context,
@@ -27,7 +28,8 @@ public class AdminController : Controller
         IFeedService feedService,
         ILogger<AdminController> logger,
         IRecurringJobManager recurringJobManager,
-        IMemoryCache cache)
+        IMemoryCache cache,
+        IReportService reportService)
     {
         _context = context;
         _userManager = userManager;
@@ -35,6 +37,7 @@ public class AdminController : Controller
         _logger = logger;
         _recurringJobManager = recurringJobManager;
         _cache = cache;
+        _reportService = reportService;
     }
 
     public async Task<IActionResult> Index()
@@ -198,6 +201,30 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    public async Task<IActionResult> Reports()
+    {
+        var reports = await _reportService.GetUnresolvedReportsAsync();
+        return View(reports);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ResolveReport(int id, string resolutionNotes)
+    {
+        try
+        {
+            var userName = User.Identity?.Name ?? "Admin";
+            await _reportService.MarkAsResolvedAsync(id, userName, resolutionNotes);
+            TempData["SuccessMessage"] = "Report marked as resolved.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resolving report {ReportId}", id);
+            TempData["ErrorMessage"] = "Error resolving report: " + ex.Message;
+        }
+        
+        return RedirectToAction(nameof(Reports));
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CleanupOldArticles(int daysOld = 30)
@@ -260,3 +287,4 @@ public class CachedTrendingInfo
     public TimeSpan TimeUntilExpiry { get; set; }
     public int ArticleCount { get; set; }
 }
+

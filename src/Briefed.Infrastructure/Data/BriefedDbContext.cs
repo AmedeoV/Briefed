@@ -19,6 +19,7 @@ public class BriefedDbContext : IdentityDbContext<User>, IDataProtectionKeyConte
     public DbSet<UserArticle> UserArticles => Set<UserArticle>();
     public DbSet<SavedArticle> SavedArticles => Set<SavedArticle>();
     public DbSet<DeletedArticle> DeletedArticles => Set<DeletedArticle>();
+    public DbSet<ContentReport> ContentReports => Set<ContentReport>();
     public DbSet<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey> DataProtectionKeys => Set<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -136,6 +137,30 @@ public class BriefedDbContext : IdentityDbContext<User>, IDataProtectionKeyConte
             entity.Property(e => e.Url).IsRequired().HasMaxLength(2000);
             entity.HasIndex(e => e.Url); // Index for fast lookups
             entity.HasIndex(e => e.DeletedAt);
+        });
+
+        // ContentReport configuration
+        modelBuilder.Entity<ContentReport>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ContentType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Reason).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.AdditionalDetails).HasMaxLength(2000);
+            entity.Property(e => e.ResolvedBy).HasMaxLength(256);
+            entity.Property(e => e.ResolutionNotes).HasMaxLength(2000);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Article)
+                .WithMany()
+                .HasForeignKey(e => e.ArticleId)
+                .OnDelete(DeleteBehavior.SetNull);
+                
+            entity.HasIndex(e => e.IsResolved);
+            entity.HasIndex(e => e.ReportedAt);
         });
     }
 }
