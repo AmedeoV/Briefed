@@ -3,12 +3,18 @@ package com.briefed.app;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
@@ -21,10 +27,37 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Enable edge-to-edge display
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        
+        // Set status bar and navigation bar to use dark icons (visible on light background)
+        WindowInsetsControllerCompat windowInsetsController = 
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (windowInsetsController != null) {
+            windowInsetsController.setAppearanceLightStatusBars(true);
+            windowInsetsController.setAppearanceLightNavigationBars(true);
+        }
+        
         setContentView(R.layout.activity_main);
         
         swipeRefreshLayout = findViewById(R.id.swipe_refresh);
         webView = findViewById(R.id.webview);
+        
+        // Handle window insets for edge-to-edge display
+        ViewCompat.setOnApplyWindowInsetsListener(swipeRefreshLayout, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            
+            // Apply insets as padding to the SwipeRefreshLayout
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            params.leftMargin = insets.left;
+            params.topMargin = insets.top;
+            params.rightMargin = insets.right;
+            params.bottomMargin = insets.bottom;
+            v.setLayoutParams(params);
+            
+            return WindowInsetsCompat.CONSUMED;
+        });
         
         // Configure WebView settings
         WebSettings webSettings = webView.getSettings();
